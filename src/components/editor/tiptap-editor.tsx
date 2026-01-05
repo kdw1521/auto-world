@@ -3,6 +3,8 @@
 import * as React from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
+import ImageExtension from "@tiptap/extension-image";
+import LinkExtension from "@tiptap/extension-link";
 import { Extension, textblockTypeInputRule } from "@tiptap/core";
 import {
   Bold,
@@ -11,6 +13,7 @@ import {
   Italic,
   List,
   ListOrdered,
+  Link2,
   Minus,
   Quote,
   SquareCode,
@@ -25,6 +28,74 @@ type TiptapFieldProps = {
   defaultValue?: string;
   className?: string;
 };
+
+const IMAGE_EXTENSIONS = [
+  ".png",
+  ".jpg",
+  ".jpeg",
+  ".gif",
+  ".webp",
+  ".svg",
+  ".avif",
+];
+
+const URL_FINDER = /(https?:\/\/[^\s]+)/i;
+
+function normalizeUrl(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return null;
+  }
+  const withProtocol = /^https?:\/\//i.test(trimmed)
+    ? trimmed
+    : `https://${trimmed}`;
+  try {
+    return new URL(withProtocol).toString();
+  } catch {
+    return null;
+  }
+}
+
+function extractDriveFileId(url: string) {
+  try {
+    const parsed = new URL(url);
+    if (!parsed.hostname.includes("drive.google.com")) {
+      return null;
+    }
+    if (parsed.pathname.startsWith("/file/d/")) {
+      const parts = parsed.pathname.split("/");
+      return parts[3] ?? null;
+    }
+    const id = parsed.searchParams.get("id");
+    return id ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function extractFirstUrl(value: string) {
+  const match = value.match(URL_FINDER);
+  return match ? match[1] : null;
+}
+
+function resolveImageUrl(input: string) {
+  const normalized = normalizeUrl(input);
+  if (!normalized) {
+    return null;
+  }
+
+  const driveId = extractDriveFileId(normalized);
+  if (driveId) {
+    return `https://drive.google.com/thumbnail?id=${driveId}&sz=w2000`;
+  }
+
+  const lowerPath = new URL(normalized).pathname.toLowerCase();
+  if (IMAGE_EXTENSIONS.some((ext) => lowerPath.endsWith(ext))) {
+    return normalized;
+  }
+
+  return null;
+}
 
 const CodeBlockShortcut = Extension.create({
   name: "codeBlockShortcut",
@@ -50,12 +121,65 @@ export function TiptapField({
   const [value, setValue] = React.useState(defaultValue);
 
   const editor = useEditor({
-    extensions: [StarterKit, CodeBlockShortcut],
+    extensions: [
+      StarterKit,
+      ImageExtension.configure({
+        inline: false,
+        allowBase64: false,
+        HTMLAttributes: {
+          // Google Drive 이미지가 외부 사이트(내 사이트)에서 요청될 때 차단되지 않도록 설정
+          referrerpolicy: "no-referrer",
+          class: "tiptap-image",
+        },
+      }),
+      LinkExtension.configure({
+        openOnClick: false,
+        autolink: true,
+        linkOnPaste: true,
+        HTMLAttributes: {
+          target: "_blank",
+          rel: "noopener noreferrer",
+        },
+      }),
+      CodeBlockShortcut,
+    ],
     content: defaultValue,
     immediatelyRender: false,
     editorProps: {
       attributes: {
         class: "tiptap",
+      },
+      handlePaste(view, event) {
+        const uriList = event.clipboardData?.getData("text/uri-list") ?? "";
+        const firstUri = uriList
+          .split("\n")
+          .map((line) => line.trim())
+          .find((line) => line && !line.startsWith("#"));
+        const plainText = event.clipboardData?.getData("text/plain") ?? "";
+        const candidate =
+          firstUri || extractFirstUrl(plainText) || plainText.trim();
+
+        if (!candidate) {
+          return false;
+        }
+
+        const imageUrl = resolveImageUrl(candidate);
+        if (!imageUrl) {
+          return false;
+        }
+
+        const imageType = view.state.schema.nodes.image;
+        if (!imageType) {
+          return false;
+        }
+
+        const node = imageType.create({
+          src: imageUrl,
+          alt: "첨부 이미지",
+        });
+        const transaction = view.state.tr.replaceSelectionWith(node);
+        view.dispatch(transaction.scrollIntoView());
+        return true;
       },
     },
     onUpdate({ editor }) {
@@ -63,14 +187,62 @@ export function TiptapField({
     },
   });
 
+  const handleLink = React.useCallback(() => {
+    if (!editor) {
+      return;
+    }
+
+    const previousUrl = editor.getAttributes("link").href as string | undefined;
+    const input = window.prompt(
+      "링크 주소를 입력해 주세요.",
+      previousUrl ?? ""
+    );
+
+    if (input === null) {
+      return;
+    }
+
+    const trimmed = input.trim();
+    if (!trimmed) {
+      editor.chain().focus().unsetLink().run();
+      return;
+    }
+
+    const hasSelection = !editor.state.selection.empty;
+    const imageUrl = resolveImageUrl(trimmed);
+    if (imageUrl && !hasSelection) {
+      editor
+        .chain()
+        .focus()
+        .setImage({ src: imageUrl, alt: "첨부 이미지" })
+        .run();
+      return;
+    }
+
+    const normalized = normalizeUrl(trimmed);
+    if (!normalized) {
+      return;
+    }
+
+    const chain = editor.chain().focus();
+    if (!hasSelection) {
+      chain.insertContent(normalized);
+    }
+    chain.extendMarkRange("link").setLink({ href: normalized }).run();
+  }, [editor]);
+
   return (
     <div className={cn("space-y-2", className)}>
       <div className="flex flex-wrap gap-2 rounded-md border border-border bg-background/80 p-2">
         <Button
           type="button"
           size="icon-sm"
-          variant={editor?.isActive("heading", { level: 2 }) ? "default" : "ghost"}
-          onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
+          variant={
+            editor?.isActive("heading", { level: 2 }) ? "default" : "ghost"
+          }
+          onClick={() =>
+            editor?.chain().focus().toggleHeading({ level: 2 }).run()
+          }
           disabled={!editor}
           aria-label="제목"
           title="제목"
@@ -164,6 +336,17 @@ export function TiptapField({
           title="코드 블록"
         >
           <SquareCode className="size-4" />
+        </Button>
+        <Button
+          type="button"
+          size="icon-sm"
+          variant={editor?.isActive("link") ? "default" : "ghost"}
+          onClick={handleLink}
+          disabled={!editor}
+          aria-label="링크"
+          title="링크"
+        >
+          <Link2 className="size-4" />
         </Button>
         <Button
           type="button"

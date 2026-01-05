@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Noto_Sans_KR, Noto_Serif_KR, Space_Mono } from "next/font/google";
 import "./globals.css";
 
@@ -44,7 +45,9 @@ export default function RootLayout({
         <SiteHeader />
         {children}
         <TopActionsMenu />
-        <ToastEvents />
+        <Suspense fallback={null}>
+          <ToastEvents />
+        </Suspense>
         <Toaster />
       </body>
     </html>

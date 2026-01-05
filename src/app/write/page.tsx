@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { PenLine, ShieldCheck, Sparkles, Zap } from "lucide-react";
 import { redirect } from "next/navigation";
 
@@ -42,29 +41,6 @@ export default async function WritePage({ searchParams }: WritePageProps) {
         <div className="absolute right-16 top-16 h-20 w-20 rounded-full bg-primary/30 blur-2xl animate-[float-fast_7s_ease-in-out_infinite]" />
 
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-10">
-          <header className="flex flex-wrap items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <Link
-                href="/"
-                aria-label="홈으로"
-                className="flex h-11 w-11 items-center justify-center rounded-2xl bg-primary text-sm font-semibold text-primary-foreground shadow-lg shadow-primary/30"
-              >
-                AW
-              </Link>
-              <div>
-                <p className="text-sm font-semibold tracking-tight">
-                  AutoWorld
-                </p>
-                <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-                  글쓰기
-                </p>
-              </div>
-            </div>
-            <Button asChild variant="ghost" size="sm">
-              <Link href="/">홈으로</Link>
-            </Button>
-          </header>
-
           <section className="space-y-4">
             <Badge className="rounded-full bg-primary/10 text-primary">
               글쓰기

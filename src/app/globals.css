@@ -185,6 +185,13 @@
   .text-glow {
     text-shadow: 0 0 24px rgba(88, 24, 162, 0.35);
   }
+
+  .line-clamp-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 }
 
 .tiptap {

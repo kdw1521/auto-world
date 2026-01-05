@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import SubmitButton from "@/components/ui/submit-button";
 import { getSupabaseServerClientReadOnly } from "@/lib/supabase/server";
 
 type MyPageProps = {
@@ -136,9 +137,9 @@ export default async function MyPage({ searchParams }: MyPageProps) {
                   <BadgeCheck className="size-4 text-primary" />
                   1~24자 사이로 입력해 주세요. 공백과 이모지도 사용 가능합니다.
                 </div>
-                <Button type="submit" className="w-full rounded-full">
+                <SubmitButton className="w-full rounded-full" pendingText="저장 중...">
                   닉네임 저장
-                </Button>
+                </SubmitButton>
               </form>
               <p className="text-xs text-muted-foreground">
                 닉네임 변경은 새로 작성하는 글부터 적용됩니다.

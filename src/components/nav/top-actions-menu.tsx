@@ -7,6 +7,7 @@ import { usePathname } from "next/navigation";
 import { submitInquiry } from "@/app/actions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import SubmitButton from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 
 export default function TopActionsMenu() {
@@ -110,9 +111,9 @@ export default function TopActionsMenu() {
               <p className="text-xs text-muted-foreground">
                 이메일은 문의 응대 외의 어떠한 용도로도 사용되지 않습니다.
               </p>
-              <Button type="submit" className="w-full rounded-full">
+              <SubmitButton className="w-full rounded-full" pendingText="전송 중...">
                 문의 보내기
-              </Button>
+              </SubmitButton>
             </form>
           )}
         </div>

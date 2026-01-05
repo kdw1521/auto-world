@@ -9,6 +9,7 @@ import LikeButton from "@/components/posts/like-button";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import SubmitButton from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { getSupabaseServerClientReadOnly } from "@/lib/supabase/server";
 
@@ -253,9 +254,12 @@ export default async function PostDetail({
                       />
                       <div className="flex flex-wrap items-center justify-between gap-3 text-xs text-muted-foreground">
                         <span>답글은 한 단계까지만 작성할 수 있어요.</span>
-                        <Button type="submit" className="rounded-full">
+                        <SubmitButton
+                          className="rounded-full"
+                          pendingText="등록 중..."
+                        >
                           댓글 등록
-                        </Button>
+                        </SubmitButton>
                       </div>
                     </div>
                   </div>
@@ -345,13 +349,13 @@ export default async function PostDetail({
                                 maxLength={1000}
                                 required
                               />
-                              <Button
-                                type="submit"
+                              <SubmitButton
                                 size="sm"
                                 className="rounded-full"
+                                pendingText="등록 중..."
                               >
                                 답글 등록
-                              </Button>
+                              </SubmitButton>
                             </form>
                           </details>
                         )}
@@ -381,13 +385,13 @@ export default async function PostDetail({
                                 maxLength={1000}
                                 required
                               />
-                              <Button
-                                type="submit"
+                              <SubmitButton
                                 size="sm"
                                 className="rounded-full"
+                                pendingText="저장 중..."
                               >
                                 수정 저장
-                              </Button>
+                              </SubmitButton>
                             </form>
                           </details>
                         )}
@@ -461,13 +465,13 @@ export default async function PostDetail({
                                         maxLength={1000}
                                         required
                                       />
-                                      <Button
-                                        type="submit"
+                                      <SubmitButton
                                         size="sm"
                                         className="rounded-full"
+                                        pendingText="저장 중..."
                                       >
                                         수정 저장
-                                      </Button>
+                                      </SubmitButton>
                                     </form>
                                   </details>
                                 )}

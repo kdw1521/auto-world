@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import SubmitButton from "@/components/ui/submit-button";
 
 type SignupPageProps = {
   searchParams?: Promise<{
@@ -128,9 +129,9 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
                 <p className="text-xs text-muted-foreground">
                   영문과 숫자를 모두 포함한 8자 이상 비밀번호를 사용해 주세요.
                 </p>
-                <Button type="submit" className="w-full rounded-full">
+                <SubmitButton className="w-full rounded-full" pendingText="가입 중...">
                   회원가입
-                </Button>
+                </SubmitButton>
               </form>
               <p className="text-xs text-muted-foreground">
                 가입 후 이메일 확인을 완료하면 바로 글쓰기를 시작할 수 있어요.

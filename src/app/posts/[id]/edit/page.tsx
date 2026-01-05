@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import SubmitButton from "@/components/ui/submit-button";
 import { getSupabaseServerClientReadOnly } from "@/lib/supabase/server";
 
 type EditPostProps = {
@@ -93,9 +94,9 @@ export default async function EditPost({ params, searchParams }: EditPostProps) 
               <input type="hidden" name="postId" value={post.id} />
               <Input name="title" defaultValue={post.title} required />
               <TiptapField name="content" defaultValue={post.content ?? ""} />
-              <Button type="submit" className="w-full rounded-full">
+              <SubmitButton className="w-full rounded-full" pendingText="저장 중...">
                 수정 저장
-              </Button>
+              </SubmitButton>
             </form>
           </CardContent>
         </Card>

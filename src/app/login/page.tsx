@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import SubmitButton from "@/components/ui/submit-button";
 
 type LoginPageProps = {
   searchParams?: Promise<{
@@ -110,9 +111,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                   placeholder="비밀번호"
                   required
                 />
-                <Button type="submit" className="w-full rounded-full">
+                <SubmitButton className="w-full rounded-full" pendingText="로그인 중...">
                   로그인
-                </Button>
+                </SubmitButton>
               </form>
               <p className="text-xs text-muted-foreground">
                 로그인 후 글쓰기와 공감 기능을 이용할 수 있습니다.

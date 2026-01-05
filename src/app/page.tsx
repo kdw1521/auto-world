@@ -299,7 +299,9 @@ export default async function Home() {
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3 text-sm text-muted-foreground">
-                      <p>{post.content_text || "내용 미리보기가 없습니다."}</p>
+                      <p className="line-clamp-3">
+                        {post.content_text || "내용 미리보기가 없습니다."}
+                      </p>
                     </CardContent>
                   </Link>
                   <CardFooter className="justify-between text-xs text-muted-foreground">

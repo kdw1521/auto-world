@@ -2,9 +2,9 @@ import { redirect } from "next/navigation";
 
 import { submitSupportRequest } from "@/app/actions";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import SubmitButton from "@/components/ui/submit-button";
 import { Textarea } from "@/components/ui/textarea";
 import { getSupabaseServerClientReadOnly } from "@/lib/supabase/server";
 
@@ -71,9 +71,9 @@ export default async function RequestsPage({ searchParams }: RequestsPageProps) 
                 maxLength={4000}
                 required
               />
-              <Button type="submit" className="w-full rounded-full">
+              <SubmitButton className="w-full rounded-full" pendingText="전송 중...">
                 요청 보내기
-              </Button>
+              </SubmitButton>
             </form>
             <p className="text-xs text-muted-foreground">
               작성한 요청은 본인만 볼 수 있으며, 운영자 답변이 등록되면

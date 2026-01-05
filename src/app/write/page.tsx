@@ -4,10 +4,10 @@ import { redirect } from "next/navigation";
 import { createPost } from "@/app/actions";
 import { TiptapField } from "@/components/editor/tiptap-editor";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import SubmitButton from "@/components/ui/submit-button";
 import { getSupabaseServerClientReadOnly } from "@/lib/supabase/server";
 
 type WritePageProps = {
@@ -69,10 +69,13 @@ export default async function WritePage({ searchParams }: WritePageProps) {
                 <form action={createPost} className="space-y-5">
                   <Input name="title" placeholder="제목" required />
                   <TiptapField name="content" />
-                  <Button type="submit" className="w-full rounded-full">
+                  <SubmitButton
+                    className="w-full rounded-full"
+                    pendingText="등록 중..."
+                  >
                     글 올리기
                     <PenLine className="size-4" />
-                  </Button>
+                  </SubmitButton>
                 </form>
               </CardContent>
             </Card>

@@ -7,6 +7,7 @@ import SiteHeader from "@/components/nav/site-header";
 import TopActionsMenu from "@/components/nav/top-actions-menu";
 import ToastEvents from "@/components/notifications/toast-events";
 import { Toaster } from "@/components/ui/sonner";
+import { Analytics } from "@vercel/analytics/next";
 
 const notoSans = Noto_Sans_KR({
   variable: "--font-noto-sans-kr",
@@ -49,6 +50,7 @@ export default function RootLayout({
           <ToastEvents />
         </Suspense>
         <Toaster />
+        <Analytics />
       </body>
     </html>
   );

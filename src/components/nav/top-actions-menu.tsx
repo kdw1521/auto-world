@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ArrowUp, Mail, ScreenShare } from "lucide-react";
+import Link from "next/link";
+import { ArrowUp, Mail, PenLine, ScreenShare } from "lucide-react";
 import { usePathname } from "next/navigation";
 
 import { submitInquiry } from "@/app/actions";
@@ -58,18 +59,31 @@ export default function TopActionsMenu() {
       ref={wrapperRef}
       className="fixed bottom-5 right-5 z-50 md:bottom-6 md:right-6"
     >
-      <Button
-        type="button"
-        className="h-12 w-12 rounded-full p-0 shadow-lg shadow-primary/30"
-        onClick={() => setOpen((prev) => !prev)}
-        aria-expanded={open}
-        aria-haspopup="true"
-      >
-        <ScreenShare className="size-5" />
-      </Button>
+      <div className="flex flex-col items-center gap-3">
+        <Button
+          asChild
+          className="h-12 w-12 rounded-full p-0 shadow-lg shadow-primary/30"
+          aria-label="글쓰기"
+        >
+          <Link href="/write">
+            <PenLine className="size-5" />
+          </Link>
+        </Button>
+
+        <Button
+          type="button"
+          className="h-12 w-12 rounded-full p-0 shadow-lg shadow-primary/30"
+          onClick={() => setOpen((prev) => !prev)}
+          aria-expanded={open}
+          aria-haspopup="true"
+          aria-label="빠른 메뉴"
+        >
+          <ScreenShare className="size-5" />
+        </Button>
+      </div>
 
       {open && (
-        <div className="absolute bottom-14 right-0 z-50 w-72 rounded-2xl border border-border/70 bg-background/95 p-4 shadow-lg">
+        <div className="absolute bottom-28 right-0 z-50 w-72 rounded-2xl border border-border/70 bg-background/95 p-4 shadow-lg">
           <div className="space-y-2">
             <button
               type="button"

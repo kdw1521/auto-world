@@ -381,9 +381,6 @@ export default async function Home() {
             <span>AutoWorld 자동화 커뮤니티</span>
           </div>
           <div className="flex flex-wrap items-center gap-6">
-            <Link className="hover:text-foreground" href="/write">
-              글쓰기
-            </Link>
             <span>© {currentYear} AutoWorld. 모든 권리 보유.</span>
           </div>
         </div>

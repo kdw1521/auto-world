@@ -45,7 +45,7 @@ export default async function Home() {
       "id, title, content_text, created_at, author_username, views, likes"
     )
     .order("created_at", { ascending: false })
-    .limit(12);
+    .limit(4);
 
   if (error) {
     console.error("Supabase posts fetch error:", error.message);

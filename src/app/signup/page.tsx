@@ -1,17 +1,13 @@
-import Link from "next/link";
-import {
-  BadgeCheck,
-  HeartHandshake,
-  ShieldCheck,
-  Sparkles,
-} from "lucide-react";
 
-import { signUp } from "@/app/actions";
-import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import { ArrowRight, Lock, Mail } from "lucide-react";
+import SignUpClient from "@/components/sections/signUp_client";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import SubmitButton from "@/components/ui/submit-button";
+import { Logo } from "@/components/ui/logo";
+import { signUp } from "@/app/actions";
 
 type SignupPageProps = {
   searchParams?: Promise<{
@@ -28,121 +24,137 @@ const ERROR_MESSAGES: Record<string, string> = {
 
 export default async function SignupPage({ searchParams }: SignupPageProps) {
   const params = (await searchParams) ?? {};
-  const errorMessage = ERROR_MESSAGES[params.error ?? ""];
+  const error = params.error ?? "";
   const nextPath = params.next ?? "";
+  const errorMessage = ERROR_MESSAGES[error] ?? "";
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,rgba(76,33,137,0.3),transparent_55%),radial-gradient(circle_at_85%_15%,rgba(190,120,255,0.24),transparent_55%),linear-gradient(180deg,rgba(252,248,255,0.98),rgba(245,238,255,0.98))]" />
-        <div className="absolute inset-0 -z-10 opacity-40 bg-[linear-gradient(to_right,rgba(74,36,134,0.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(74,36,134,0.08)_1px,transparent_1px)] bg-size-[84px_84px]" />
-        <div className="absolute -left-20 top-32 h-48 w-48 rounded-full bg-primary/25 blur-3xl animate-[pulse-glow_10s_ease-in-out_infinite]" />
-        <div className="absolute right-12 top-20 h-20 w-20 rounded-full bg-primary/30 blur-2xl animate-[float-fast_7s_ease-in-out_infinite]" />
+    <div className="flex min-h-screen items-center justify-center bg-[#0C342C] p-4">
+      {/* Animated Background Grid */}
+      <div className="fixed inset-0 opacity-10">
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `
+            linear-gradient(to right, #E3EF26 1px, transparent 1px),
+            linear-gradient(to bottom, #E3EF26 1px, transparent 1px)
+          `,
+            backgroundSize: "40px 40px",
+          }}
+        />
+      </div>
 
-        <div className="mx-auto grid w-full max-w-6xl gap-10 px-6 py-14 lg:grid-cols-[1.1fr_0.9fr]">
-          <section className="space-y-6">
-            <Badge className="w-fit rounded-full bg-primary/10 text-primary">
-              회원가입
-            </Badge>
-            <h1 className="font-heading text-3xl font-semibold leading-tight text-glow md:text-4xl">
-              자동화 경험을
-              <br />
-              함께 나눌 준비가 되셨나요?
-            </h1>
-            <p className="text-sm text-muted-foreground">
-              이메일과 비밀번호만 받습니다. 개인정보 없이 안전하게 참여할 수
-              있어요.
-            </p>
-            <div className="grid gap-4 md:grid-cols-2">
-              {[
-                {
-                  icon: HeartHandshake,
-                  title: "공감 기반",
-                  description: "실무 경험에 대한 공감을 나눕니다.",
-                },
-                {
-                  icon: Sparkles,
-                  title: "실전 흐름",
-                  description: "바로 적용 가능한 워크플로우를 모읍니다.",
-                },
-                {
-                  icon: BadgeCheck,
-                  title: "검증된 사례",
-                  description: "사무업무에 특화된 자동화만 공유합니다.",
-                },
-                {
-                  icon: ShieldCheck,
-                  title: "프라이버시",
-                  description: "이메일 외 추가 정보는 받지 않습니다.",
-                },
-              ].map((item) => (
-                <Card
-                  key={item.title}
-                  className="border-border/70 bg-background/90 shadow-sm transition hover:-translate-y-1 hover:shadow-lg"
-                >
-                  <CardContent className="space-y-2 px-4 py-4">
-                    <item.icon className="size-5 text-primary" />
-                    <p className="text-sm font-semibold text-foreground">
-                      {item.title}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {item.description}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
+      <SignUpClient>
+        <div className="mb-8 text-center">
+          <div className="mb-4 inline-flex flex-col items-center gap-3">
+            <Logo className="h-16 w-16" variant="professional" />
+            <div>
+              <h1 className="mb-2 text-3xl font-bold text-[#E3EF26]">
+                AutoWorld
+              </h1>
+              <p className="text-[#E3EF26]/60">Enterprise Automation Hub</p>
             </div>
-            <p className="text-sm text-muted-foreground">
-              이미 계정이 있나요?{" "}
-              <Link className="font-semibold text-foreground" href="/login">
-                로그인
-              </Link>
-            </p>
-          </section>
+          </div>
+        </div>
 
-          <Card className="border-primary/15 bg-background/95 shadow-xl">
-            <CardHeader>
-              <CardTitle className="text-2xl font-semibold">회원가입</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {errorMessage && (
-                <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                  {errorMessage}
-                </div>
-              )}
-              <form action={signUp} className="space-y-4">
-                <input type="hidden" name="next" value={nextPath} />
+        {/* 로그인 카드*/}
+        <Card className="rounded-none border-2 border-[#E3EF26]/30 bg-[#164D42]/50 p-8 backdrop-blur-sm">
+          <div className="mb-6">
+            <h2 className="mb-2 text-2xl font-bold text-[#E3EF26]">
+              Welcome AutoWorld!
+            </h2>
+            <p className="text-sm text-[#E3EF26]/60">
+              혼자 머리 싸매지 마세요. 이제 함께 자동화합시다.
+            </p>
+          </div>
+
+          {errorMessage ? (
+            <div className="border-2 border-[#CEF431]/30 bg-[#CEF431]/10 px-4 py-3">
+              <p className="text-sm font-medium text-[#CEF431]">
+                ⚠ {errorMessage}
+              </p>
+            </div>
+          ) : null}
+
+          <form action={signUp} className="space-y-4">
+            <input type="hidden" name="next" value={nextPath} />
+
+            <div>
+              <label className="mb-2 block text-sm text-[#E3EF26]/90">
+                Email
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#E3EF26]/60" />
                 <Input
                   name="email"
                   type="email"
-                  placeholder="이메일"
+                  placeholder="이메일을 입력해주세요"
                   required
+                  className="h-12 rounded-none border-2 border-[#E3EF26]/30 bg-[#0C342C]/50 pl-12 text-[#E3EF26] placeholder:text-[#E3EF26]/40 focus:border-[#E3EF26] focus:ring-2 focus:ring-[#E3EF26]/20"
                 />
+              </div>
+            </div>
+
+            <div>
+              <div className="mb-2 flex items-center justify-between">
+                <label className="block text-sm text-[#E3EF26]/90">
+                  Password
+                </label>
+                <button
+                  type="button"
+                  className="text-xs text-[#E3EF26] transition-colors hover:text-[#E3EF26]/80"
+                >
+                  비밀번호를 잊으셨나요?
+                </button>
+              </div>
+              <div className="relative">
+                <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#E3EF26]/60" />
                 <Input
                   name="password"
                   type="password"
-                  placeholder="비밀번호"
-                  minLength={8}
-                  autoComplete="new-password"
+                  placeholder="패스워드를 입력해주세요"
                   required
+                  className="h-12 rounded-none border-2 border-[#E3EF26]/30 bg-[#0C342C]/50 pl-12 text-[#E3EF26] placeholder:text-[#E3EF26]/40 focus:border-[#E3EF26] focus:ring-2 focus:ring-[#E3EF26]/20"
                 />
-                <p className="text-xs text-muted-foreground">
-                  영문과 숫자를 모두 포함한 8자 이상 비밀번호를 사용해 주세요.
-                </p>
-                <SubmitButton className="w-full rounded-full" pendingText="가입 중...">
-                  회원가입
-                </SubmitButton>
-              </form>
-              <p className="text-xs text-muted-foreground">
-                가입 후 이메일 확인을 완료하면 바로 글쓰기를 시작할 수 있어요.
-              </p>
-              <Button asChild variant="ghost" className="w-full">
-                <Link href="/">홈으로 돌아가기</Link>
-              </Button>
-            </CardContent>
-          </Card>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <SubmitButton
+              className="h-12 w-full rounded-none bg-[#E3EF26] font-semibold text-[#0C342C] shadow-lg shadow-[#E3EF26]/20 hover:bg-[#E3EF26]/90"
+              pendingText="가입 중..."
+            >
+              회원가입
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </SubmitButton>
+          </form>
+
+          <p className="mt-4 text-center text-xs text-[#E3EF26]/60">
+            로그인 후 글쓰기와 공감 기능을 이용할 수 있습니다.
+          </p>
+          <Button asChild variant="ghost" className="w-full">
+            <Link href="/">홈으로 돌아가기</Link>
+          </Button>
+        </Card>
+
+        {/* Footer */}
+        <div className="mt-8 text-center">
+          <div className="flex items-center justify-center gap-6 text-sm text-[#E3EF26]/60">
+            <button className="transition-colors hover:text-[#E3EF26]">
+              Terms
+            </button>
+            <button className="transition-colors hover:text-[#E3EF26]">
+              Privacy
+            </button>
+            <button className="transition-colors hover:text-[#E3EF26]">
+              Help
+            </button>
+          </div>
+          <p className="mt-4 text-xs text-[#E3EF26]/40">
+            © 2026 AutoDev Professional. All rights reserved.
+          </p>
         </div>
-      </div>
+      </SignUpClient>
     </div>
   );
 }

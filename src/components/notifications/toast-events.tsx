@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   AlertTriangle,
   CheckCircle,
@@ -37,9 +38,82 @@ const EVENTS = [
   },
   {
     key: "email_sent",
-    message: "메일이 발송되었습니다! 메일함을 확인해주세요 :)",
+    message:
+      "적어주신 이메일을 확인해주세요. Supabase Auth로 발송되었을거에요.",
     type: "info",
     icon: <Mail className="h-5 w-5" />,
+  },
+  {
+    key: "email_already_sent",
+    message: "이미 이메일이 발송되었습니다. 메일함을 확인해 주세요.",
+    type: "info",
+    icon: <Mail className="h-5 w-5" />,
+  },
+  {
+    key: "signup_exists",
+    message: "이미 가입된 계정입니다.",
+    type: "error",
+    icon: <XCircle className="h-5 w-5" />,
+  },
+  {
+    key: "email_not_confirmed",
+    message: "가입 하신 이메일의 메일함을 확인해주세요.",
+    type: "info",
+    icon: <Mail className="h-5 w-5" />,
+  },
+  {
+    key: "invalid_credentials",
+    message: "이메일 또는 비밀번호를 확인해 주세요.",
+    type: "error",
+    icon: <XCircle className="h-5 w-5" />,
+  },
+  {
+    key: "user_banned",
+    message: "접근이 제한된 계정입니다. 관리자에게 문의해 주세요.",
+    type: "error",
+    icon: <XCircle className="h-5 w-5" />,
+  },
+  {
+    key: "login_provider_disabled",
+    message: "현재 로그인이 비활성화되어 있습니다.",
+    type: "error",
+    icon: <XCircle className="h-5 w-5" />,
+  },
+  {
+    key: "weak_password",
+    message: "비밀번호가 너무 약합니다. 다른 비밀번호를 사용해 주세요.",
+    type: "error",
+    icon: <XCircle className="h-5 w-5" />,
+  },
+  {
+    key: "email_invalid",
+    message: "이메일 형식을 확인해 주세요.",
+    type: "error",
+    icon: <XCircle className="h-5 w-5" />,
+  },
+  {
+    key: "email_not_allowed",
+    message: "사용할 수 없는 이메일입니다.",
+    type: "error",
+    icon: <XCircle className="h-5 w-5" />,
+  },
+  {
+    key: "rate_limited",
+    message: "요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.",
+    type: "warning",
+    icon: <AlertTriangle className="h-5 w-5" />,
+  },
+  {
+    key: "signup_disabled",
+    message: "현재 회원가입이 비활성화되어 있습니다.",
+    type: "error",
+    icon: <XCircle className="h-5 w-5" />,
+  },
+  {
+    key: "captcha_failed",
+    message: "보안 확인에 실패했습니다. 다시 시도해 주세요.",
+    type: "error",
+    icon: <XCircle className="h-5 w-5" />,
   },
   {
     key: "edited",
@@ -92,8 +166,12 @@ const EVENTS = [
 ] as const;
 
 export default function ToastEvents() {
+  const searchParams = useSearchParams();
+  const pathname = usePathname();
+  const search = searchParams.toString();
+
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
+    const params = new URLSearchParams(search);
     const event = EVENTS.find((item) => params.has(item.key));
 
     if (!event) {
@@ -119,10 +197,9 @@ export default function ToastEvents() {
 
     EVENTS.forEach((item) => params.delete(item.key));
     const nextQuery = params.toString();
-    const path = window.location.pathname;
-    const nextUrl = nextQuery ? `${path}?${nextQuery}` : path;
+    const nextUrl = nextQuery ? `${pathname}?${nextQuery}` : pathname;
     window.history.replaceState(null, "", nextUrl);
-  }, []);
+  }, [pathname, search]);
 
   return null;
 }

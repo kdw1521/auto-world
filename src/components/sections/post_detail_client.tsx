@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import dayjs from "dayjs";
 import { motion } from "motion/react";
@@ -24,6 +25,7 @@ type CommentItem = {
   id: number;
   content: string;
   author_username: string | null;
+  author_id: string | null;
   created_at: string | null;
 };
 
@@ -36,6 +38,7 @@ type RelatedPost = {
 
 type PostDetailClientProps = {
   postId: number;
+  postAuthorId: string;
   title: string;
   contentHtml: string;
   createdAt: string | null;
@@ -68,6 +71,7 @@ function estimateReadTime(html: string) {
 
 export default function PostDetailClient({
   postId,
+  postAuthorId,
   title,
   contentHtml,
   createdAt,
@@ -83,12 +87,17 @@ export default function PostDetailClient({
   repliesByParent,
   relatedPosts,
 }: PostDetailClientProps) {
+  const [replyingTo, setReplyingTo] = useState<number | null>(null);
+
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative">
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main Content */}
         <div className="lg:col-span-2">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
             <Card className="p-8 md:p-12 bg-[#161514]/40 border-2 border-[#EAF4F4]/10 rounded-none">
               {/* Article Header */}
               <div className="mb-8">
@@ -98,7 +107,10 @@ export default function PostDetailClient({
                   </Badge>
                   {canEdit ? (
                     <Button asChild size="sm" variant="ghost">
-                      <Link href={`/posts/${postId}/edit`} className="flex items-center gap-2">
+                      <Link
+                        href={`/posts/${postId}/edit`}
+                        className="flex items-center gap-2"
+                      >
                         <PencilLine className="w-4 h-4" />
                         수정
                       </Link>
@@ -135,7 +147,9 @@ export default function PostDetailClient({
                       </span>
                     </div>
                     <div>
-                      <p className="text-[#EAF4F4] font-semibold">{authorName}</p>
+                      <p className="text-[#EAF4F4] font-semibold">
+                        {authorName}
+                      </p>
                       <p className="text-xs text-[#EAF4F4]/60">Member</p>
                     </div>
                   </div>
@@ -146,10 +160,13 @@ export default function PostDetailClient({
               <div className="prose prose-invert max-w-none w-full overflow-hidden">
                 <div
                   className="
-      text-[#EAF4F4]/90 leading-relaxed space-y-6 whitespace-pre-wrap 
-      [word-break:break-word] overflow-wrap-anywhere
-      [&_pre]:whitespace-pre-wrap [&_pre]:break-all [&_code]:break-all
-    "
+                  text-[#EAF4F4]/90 leading-relaxed space-y-6 whitespace-pre-wrap 
+                    [word-break:break-word] overflow-wrap-anywhere
+                    [&_pre]:whitespace-pre-wrap [&_pre]:break-all [&_code]:break-all
+                    [&_blockquote]:border-l-4 [&_blockquote]:border-[#EAF4F4]/30 [&_blockquote]:pl-4
+                    [&_blockquote]:py-2 [&_blockquote]:bg-[#014651]/50 [&_blockquote]:text-[#EAF4F4]
+                    [&_blockquote]:my-4 [&_blockquote_p]:m-0"
+                  suppressHydrationWarning
                   dangerouslySetInnerHTML={{ __html: contentHtml }}
                 />
               </div>
@@ -229,17 +246,63 @@ export default function PostDetailClient({
                           <div className="flex-1">
                             <div className="flex items-center justify-between mb-2">
                               <div>
-                                <p className="text-[#CEF431] font-semibold text-sm">
-                                  {comment.author_username ?? "익명"}
-                                </p>
+                                <div className="flex items-center gap-2">
+                                  <p className="text-[#CEF431] font-semibold text-sm">
+                                    {comment.author_username ?? "익명"}
+                                  </p>
+                                  {comment.author_id === postAuthorId ? (
+                                    <span className="border border-[#CEF431]/40 px-1.5 py-0.5 text-[10px] text-[#CEF431]/80">
+                                      작성자
+                                    </span>
+                                  ) : null}
+                                </div>
                                 <p className="text-xs text-[#CEF431]/60">
                                   {formatDate(comment.created_at)}
                                 </p>
                               </div>
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="ghost"
+                                onClick={() =>
+                                  setReplyingTo((prev) =>
+                                    prev === comment.id ? null : comment.id
+                                  )
+                                }
+                                className="h-7 px-2 text-xs text-[#CEF431]/80 hover:text-[#CEF431]"
+                              >
+                                {replyingTo === comment.id ? "취소" : "답글"}
+                              </Button>
                             </div>
                             <p className="text-[#CEF431]/80 text-sm leading-relaxed whitespace-pre-wrap">
                               {comment.content}
                             </p>
+
+                            {replyingTo === comment.id ? (
+                              <form
+                                action={createComment}
+                                className="mt-4 space-y-3"
+                              >
+                                <input
+                                  type="hidden"
+                                  name="postId"
+                                  value={postId}
+                                />
+                                <input
+                                  type="hidden"
+                                  name="parentId"
+                                  value={comment.id}
+                                />
+                                <Textarea
+                                  name="content"
+                                  placeholder="답글을 입력해 주세요."
+                                  className="min-h-20 rounded-none border-2 border-[#CEF431]/30 bg-[#014651]/50 text-[#CEF431] placeholder:text-[#CEF431]/40 focus:border-[#CEF431]"
+                                />
+                                <SubmitButton className="bg-[#CEF431] text-[#014651] hover:bg-[#CEF431]/90 rounded-none">
+                                  답글 등록
+                                </SubmitButton>
+                              </form>
+                            ) : null}
                           </div>
                         </div>
 
@@ -250,9 +313,15 @@ export default function PostDetailClient({
                                 key={reply.id}
                                 className="border-l border-[#CEF431]/20 pl-4"
                               >
-                                <div className="text-xs text-[#CEF431]/60 mb-1">
-                                  {reply.author_username ?? "익명"} ·{" "}
-                                  {formatDate(reply.created_at)}
+                                <div className="flex items-center gap-2 text-xs text-[#CEF431]/60 mb-1">
+                                  <span>{reply.author_username ?? "익명"}</span>
+                                  {reply.author_id === postAuthorId ? (
+                                    <span className="border border-[#CEF431]/40 px-1.5 py-0.5 text-[10px] text-[#CEF431]/80">
+                                      작성자
+                                    </span>
+                                  ) : null}
+                                  <span>·</span>
+                                  <span>{formatDate(reply.created_at)}</span>
                                 </div>
                                 <div className="text-sm text-[#CEF431]/80 whitespace-pre-wrap">
                                   {reply.content}
@@ -281,7 +350,9 @@ export default function PostDetailClient({
             <Card className="p-6 bg-[#023940]/30 border-2 border-[#CEF431]/20 rounded-none mb-6">
               <div className="text-center mb-4">
                 <div className="w-20 h-20 mx-auto bg-linear-to-br from-[#CEF431]/20 to-[#CEF431]/10 border-2 border-[#CEF431]/30 flex items-center justify-center mb-4">
-                  <span className="text-2xl text-[#CEF431]">{authorInitial}</span>
+                  <span className="text-2xl text-[#CEF431]">
+                    {authorInitial}
+                  </span>
                 </div>
                 <h3 className="text-lg font-bold text-[#CEF431] mb-1">
                   {authorName}

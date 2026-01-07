@@ -62,6 +62,17 @@ export default function WriteClient({ errorMessage }: WriteClientProps) {
     return `${minutes} min read`;
   }, [content]);
 
+  const previewHtml = useMemo(() => {
+    const trimmed = content.trim();
+    if (!trimmed) {
+      return "<p>Your article content will appear here...</p>";
+    }
+    if (trimmed.includes("&lt;") || trimmed.includes("&gt;")) {
+      return trimmed.replace(/&lt;/g, "<").replace(/&gt;/g, ">");
+    }
+    return trimmed;
+  }, [content]);
+
   const addTag = (value: string) => {
     const trimmed = value.trim().toLowerCase();
     if (!trimmed || tags.includes(trimmed) || tags.length >= 5) {
@@ -224,10 +235,18 @@ export default function WriteClient({ errorMessage }: WriteClientProps) {
                       </div>
                     )}
 
-                    <div className="prose prose-invert max-w-none">
-                      <div className="text-[#E3EF26]/70 whitespace-pre-wrap leading-relaxed">
-                        {content || "Your article content will appear here..."}
-                      </div>
+                    <div className="prose prose-invert max-w-none w-full overflow-hidden">
+                      <div
+                        className="
+                          text-[#E3EF26]/70 leading-relaxed space-y-6 whitespace-pre-wrap
+                          [word-break:break-word] overflow-wrap-anywhere
+                          [&_pre]:whitespace-pre-wrap [&_pre]:break-all [&_code]:break-all
+                          [&_blockquote]:border-l-4 [&_blockquote]:border-[#E3EF26]/40 [&_blockquote]:pl-4
+                          [&_blockquote]:py-2 [&_blockquote]:bg-[#014651]/50 [&_blockquote]:text-[#E3EF26]
+                          [&_blockquote]:my-4 [&_blockquote_p]:m-0
+                        "
+                        dangerouslySetInnerHTML={{ __html: previewHtml }}
+                      />
                     </div>
                   </Card>
                 </motion.div>
@@ -373,19 +392,31 @@ export default function WriteClient({ errorMessage }: WriteClientProps) {
                   <ul className="space-y-2 text-xs text-[#E3EF26]/80">
                     <li className="flex items-start gap-2">
                       <span className="text-[#E3EF26] mt-1">•</span>
-                      <span>누구나 읽기 쉽게 설명해주시되<br /> 전문가시라면 아낌없이 기술 용어 사용해주세요.</span>
+                      <span>
+                        누구나 읽기 쉽게 설명해주시되
+                        <br /> 전문가시라면 아낌없이 기술 용어 사용해주세요.
+                      </span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-[#E3EF26] mt-1">•</span>
-                      <span>백 마디 말보다 한 장의 캡처나 실행 예시가 큰 도움이 됩니다.</span>
+                      <span>
+                        백 마디 말보다 한 장의 캡처나 실행 예시가 큰 도움이
+                        됩니다.
+                      </span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-[#E3EF26] mt-1">•</span>
-                      <span>내 글이 꼭 필요한 사람에게 닿을 수 있도록 연관된 핵심 단어를 태그해주세요.</span>
+                      <span>
+                        내 글이 꼭 필요한 사람에게 닿을 수 있도록 연관된 핵심
+                        단어를 태그해주세요.
+                      </span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-[#E3EF26] mt-1">•</span>
-                      <span>함께 읽으면 좋은 자료나 참고한 곳의 링크를 남겨 주시면 더욱 좋습니다.</span>
+                      <span>
+                        함께 읽으면 좋은 자료나 참고한 곳의 링크를 남겨 주시면
+                        더욱 좋습니다.
+                      </span>
                     </li>
                   </ul>
                 </Card>

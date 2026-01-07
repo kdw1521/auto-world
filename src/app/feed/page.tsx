@@ -9,8 +9,7 @@ export default async function FeedPage() {
   const { data: posts, error } = await supabase
     .from("posts")
     .select("id, title, content_text, created_at, author_username, views, likes")
-    .order("created_at", { ascending: false })
-    .limit(50);
+    .order("created_at", { ascending: false });
 
   if (error) {
     console.error("Supabase posts fetch error:", error.message);

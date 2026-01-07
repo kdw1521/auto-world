@@ -3,12 +3,7 @@
 import { useMemo, useState } from "react";
 import dayjs from "dayjs";
 import { motion } from "motion/react";
-import {
-  AlertCircle,
-  Bug,
-  CheckCircle,
-  Lightbulb,
-} from "lucide-react";
+import { AlertCircle, Bug, CheckCircle, Lightbulb } from "lucide-react";
 import { submitSupportRequest } from "@/app/actions";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -219,28 +214,28 @@ export default function RequestsClient({
                 <div className="space-y-3 text-xs text-[#EAF4F4]/70 leading-relaxed">
                   <div className="flex items-start gap-2">
                     <CheckCircle
-                      className="w-3.5 h-3.5 text-[#03D26F] mt-0.5 flex-shrink-0"
+                      className="w-3.5 h-3.5 text-[#03D26F] mt-0.5 shrink-0"
                       strokeWidth={1.5}
                     />
                     <p>구체적인 상황과 재현 방법 설명</p>
                   </div>
                   <div className="flex items-start gap-2">
                     <CheckCircle
-                      className="w-3.5 h-3.5 text-[#03D26F] mt-0.5 flex-shrink-0"
+                      className="w-3.5 h-3.5 text-[#03D26F] mt-0.5 shrink-0"
                       strokeWidth={1.5}
                     />
                     <p>스크린샷이나 에러 메시지 첨부</p>
                   </div>
                   <div className="flex items-start gap-2">
                     <CheckCircle
-                      className="w-3.5 h-3.5 text-[#03D26F] mt-0.5 flex-shrink-0"
+                      className="w-3.5 h-3.5 text-[#03D26F] mt-0.5 shrink-0"
                       strokeWidth={1.5}
                     />
                     <p>브라우저, OS 정보 공유</p>
                   </div>
                   <div className="flex items-start gap-2">
                     <AlertCircle
-                      className="w-3.5 h-3.5 text-[#CEF431] mt-0.5 flex-shrink-0"
+                      className="w-3.5 h-3.5 text-[#CEF431] mt-0.5 shrink-0"
                       strokeWidth={1.5}
                     />
                     <p>중복 제출 전 최근 리포트 확인</p>
@@ -309,7 +304,7 @@ export default function RequestsClient({
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5 }}
             >
-              <Card className="p-6 bg-gradient-to-br from-[#014651] to-[#161514] border border-[#CEF431]/30 rounded-none">
+              <Card className="p-6 bg-linear-to-br from-[#014651] to-[#161514] border border-[#CEF431]/30 rounded-none">
                 <h3 className="text-sm font-medium text-[#CEF431] mb-2">
                   긴급 문의
                 </h3>
@@ -320,7 +315,7 @@ export default function RequestsClient({
                   href="mailto:support@autoworld.com"
                   className="text-xs text-[#CEF431] hover:text-[#03D26F] transition-colors underline"
                 >
-                  support@autoworld.com
+                  kdw1521@naver.com
                 </a>
               </Card>
             </motion.div>

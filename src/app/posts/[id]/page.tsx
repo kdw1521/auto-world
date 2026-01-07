@@ -135,6 +135,7 @@ export default async function PostDetail({ params, searchParams }: PostDetailPro
   return (
     <PostDetailClient
       postId={postId}
+      postAuthorId={post.author_id}
       title={post.title ?? "제목 없음"}
       contentHtml={contentHtml}
       createdAt={post.created_at}
@@ -150,6 +151,7 @@ export default async function PostDetail({ params, searchParams }: PostDetailPro
         id: comment.id,
         content: comment.content,
         author_username: comment.author_username,
+        author_id: comment.author_id,
         created_at: comment.created_at,
       }))}
       repliesByParent={Object.fromEntries(
@@ -159,6 +161,7 @@ export default async function PostDetail({ params, searchParams }: PostDetailPro
             id: comment.id,
             content: comment.content,
             author_username: comment.author_username,
+            author_id: comment.author_id,
             created_at: comment.created_at,
           })),
         ])

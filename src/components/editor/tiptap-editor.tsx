@@ -120,7 +120,12 @@ export function TiptapField({
   className,
   onChange,
 }: TiptapFieldProps) {
+  const [isMounted, setIsMounted] = React.useState(false);
   const [value, setValue] = React.useState(defaultValue);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const editor = useEditor({
     extensions: [
@@ -369,7 +374,11 @@ export function TiptapField({
       </p>
 
       <div className="rounded-lg border border-border bg-background/80 px-4 py-3">
-        <EditorContent editor={editor} />
+        {isMounted ? (
+          <EditorContent editor={editor} />
+        ) : (
+          <div className="min-h-[240px]" aria-hidden="true" />
+        )}
       </div>
 
       <input type="hidden" name={name} value={value} />

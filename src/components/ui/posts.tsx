@@ -1,7 +1,7 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
 import { Clock, Tag, MessageSquare, Eye } from "lucide-react";
 
@@ -36,6 +36,11 @@ type PostsProps = {
 export default function Posts({ posts, likedPostIds = [] }: PostsProps) {
   const [hoveredPost, setHoveredPost] = useState<number | null>(null);
   const likedIds = useMemo(() => new Set(likedPostIds), [likedPostIds]);
+  const router = useRouter();
+
+  const handleNavigate = (href: string) => {
+    router.push(href);
+  };
 
   return (
     <div className="lg:col-span-2 space-y-6">
@@ -49,7 +54,16 @@ export default function Posts({ posts, likedPostIds = [] }: PostsProps) {
           onMouseLeave={() => setHoveredPost(null)}
         >
           <Card
-            className={`rounded-none border-2 bg-[#161514]/40 p-8 transition-all duration-300 ${
+            role="link"
+            tabIndex={0}
+            onClick={() => handleNavigate(post.href)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                handleNavigate(post.href);
+              }
+            }}
+            className={`group cursor-pointer rounded-none border-2 bg-[#161514]/40 p-8 transition-all duration-300 focus-visible:outline focus-visible:outline-[#03D26F]/60 focus-visible:outline-offset-2 ${
               hoveredPost === post.id
                 ? "translate-x-2 border-[#03D26F] shadow-lg shadow-[#03D26F]/20"
                 : "border-[#EAF4F4]/10"
@@ -78,12 +92,9 @@ export default function Posts({ posts, likedPostIds = [] }: PostsProps) {
             </div>
 
             {/* Title */}
-            <Link
-              href={post.href}
-              className="mb-3 block text-xl font-semibold text-[#CEF431] transition-colors hover:text-[#03D26F]"
-            >
+            <h3 className="mb-3 text-xl font-semibold text-[#CEF431] transition-colors group-hover:text-[#03D26F]">
               {post.title}
-            </Link>
+            </h3>
 
             {/* Excerpt */}
             <p className="mb-6 text-sm leading-relaxed text-[#EAF4F4]/80">

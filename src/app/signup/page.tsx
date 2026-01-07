@@ -1,4 +1,3 @@
-
 import Link from "next/link";
 import { ArrowRight, Lock, Mail } from "lucide-react";
 import SignUpClient from "@/components/sections/signUp_client";
@@ -19,7 +18,7 @@ type SignupPageProps = {
 const ERROR_MESSAGES: Record<string, string> = {
   invalid: "이메일 형식을 확인해 주세요.",
   password: "비밀번호는 영문과 숫자를 모두 포함한 8자 이상이어야 합니다.",
-  exists: "이미 사용 중인 이메일입니다.",
+  exists: "이미 가입된 계정입니다.",
 };
 
 export default async function SignupPage({ searchParams }: SignupPageProps) {
@@ -100,12 +99,12 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
                 <label className="block text-sm text-[#E3EF26]/90">
                   Password
                 </label>
-                <button
+                {/* <button
                   type="button"
                   className="text-xs text-[#E3EF26] transition-colors hover:text-[#E3EF26]/80"
                 >
                   비밀번호를 잊으셨나요?
-                </button>
+                </button> */}
               </div>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#E3EF26]/60" />

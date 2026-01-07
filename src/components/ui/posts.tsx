@@ -34,7 +34,6 @@ type PostsProps = {
 };
 
 export default function Posts({ posts, likedPostIds = [] }: PostsProps) {
-  console.log("posers", posts);
   const [hoveredPost, setHoveredPost] = useState<number | null>(null);
   const likedIds = useMemo(() => new Set(likedPostIds), [likedPostIds]);
 

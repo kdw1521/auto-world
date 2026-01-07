@@ -1,9 +1,5 @@
 import Link from "next/link";
-import {
-  Lock,
-  Mail,
-  ArrowRight,
-} from "lucide-react";
+import { Lock, Mail, ArrowRight } from "lucide-react";
 import { Logo } from "@/components/ui/logo";
 import { signIn } from "@/app/actions";
 import { Button } from "@/components/ui/button";
@@ -28,27 +24,30 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const errorMessage = ERROR_MESSAGES[params.error ?? ""];
   const nextPath = params.next ?? "";
 
-
   return (
     <div className="min-h-screen bg-[#0C342C] flex items-center justify-center p-4">
       {/* Animated Background Grid */}
       <div className="fixed inset-0 opacity-10">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `
             linear-gradient(to right, #E3EF26 1px, transparent 1px),
             linear-gradient(to bottom, #E3EF26 1px, transparent 1px)
           `,
-          backgroundSize: '40px 40px'
-        }} />
+            backgroundSize: "40px 40px",
+          }}
+        />
       </div>
 
       <LogInClient>
-
         <div className="text-center mb-8">
           <div className="inline-flex flex-col items-center gap-3 mb-4">
             <Logo className="w-16 h-16" variant="professional" />
             <div>
-              <h1 className="text-3xl font-bold text-[#E3EF26] mb-2">AutoWorld</h1>
+              <h1 className="text-3xl font-bold text-[#E3EF26] mb-2">
+                AutoWorld
+              </h1>
               <p className="text-[#E3EF26]/60">Enterprise Automation Hub</p>
             </div>
           </div>
@@ -57,8 +56,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         {/* 로그인 카드*/}
         <Card className="p-8 bg-[#164D42]/50 border-2 border-[#E3EF26]/30 rounded-none backdrop-blur-sm">
           <div className="mb-6">
-            <h2 className="text-2xl font-bold text-[#E3EF26] mb-2">Welcome Back!</h2>
-            <p className="text-[#E3EF26]/60 text-sm">로그인하고 10시간의 노가다를 탈출하세요</p>
+            <h2 className="text-2xl font-bold text-[#E3EF26] mb-2">
+              Welcome Back!
+            </h2>
+            <p className="text-[#E3EF26]/60 text-sm">
+              로그인하고 10시간의 노가다를 탈출하세요
+            </p>
           </div>
 
           {errorMessage && (
@@ -90,13 +93,15 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
             <div>
               <div className="mb-2 flex items-center justify-between">
-                <label className="block text-sm text-[#E3EF26]/90">Password</label>
-                <button
+                <label className="block text-sm text-[#E3EF26]/90">
+                  Password
+                </label>
+                {/* <button
                   type="button"
                   className="text-xs text-[#E3EF26] transition-colors hover:text-[#E3EF26]/80"
                 >
                   비밀번호를 잊으셨나요?
-                </button>
+                </button> */}
               </div>
               <div className="relative">
                 <Lock className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-[#E3EF26]/60" />
@@ -143,9 +148,15 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         {/* Footer */}
         <div className="mt-8 text-center">
           <div className="flex items-center justify-center gap-6 text-sm text-[#E3EF26]/60">
-            <button className="hover:text-[#E3EF26] transition-colors">Terms</button>
-            <button className="hover:text-[#E3EF26] transition-colors">Privacy</button>
-            <button className="hover:text-[#E3EF26] transition-colors">Help</button>
+            <button className="hover:text-[#E3EF26] transition-colors">
+              Terms
+            </button>
+            <button className="hover:text-[#E3EF26] transition-colors">
+              Privacy
+            </button>
+            <button className="hover:text-[#E3EF26] transition-colors">
+              Help
+            </button>
           </div>
           <p className="mt-4 text-xs text-[#E3EF26]/40">
             © 2026 AutoDev Professional. All rights reserved.

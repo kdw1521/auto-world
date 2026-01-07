@@ -127,9 +127,33 @@ export async function signUp(formData: FormData) {
   });
 
   if (error) {
+    console.error("supabase error ", error.code);
     console.error("Supabase signUp error:", error.message);
     const code = (error as { code?: string }).code ?? "";
     const message = error.message.toLowerCase();
+
+    switch (code) {
+      case "email_exists":
+      case "user_already_exists":
+      case "identity_already_exists":
+        redirect(withQueryFlag("/signup?error=exists", "signup_exists"));
+      case "over_email_send_rate_limit":
+        redirect(withQueryFlag("/login", "email_already_sent"));
+      case "over_request_rate_limit":
+        redirect(withQueryFlag("/signup", "rate_limited"));
+      case "signup_disabled":
+        redirect(withQueryFlag("/signup", "signup_disabled"));
+      case "captcha_failed":
+        redirect(withQueryFlag("/signup", "captcha_failed"));
+      case "weak_password":
+        redirect(withQueryFlag("/signup?error=password", "weak_password"));
+      case "email_address_invalid":
+        redirect(withQueryFlag("/signup?error=invalid", "email_invalid"));
+      case "email_address_not_authorized":
+        redirect(withQueryFlag("/signup", "email_not_allowed"));
+      default:
+        break;
+    }
 
     if (message.includes("password")) {
       redirect("/signup?error=password");
@@ -140,14 +164,19 @@ export async function signUp(formData: FormData) {
       message.includes("already exists") ||
       message.includes("signup is not allowed for existing users")
     ) {
-      redirect("/signup?error=exists");
+      redirect(withQueryFlag("/signup?error=exists", "signup_exists"));
     }
 
     redirect("/signup?error=invalid");
   }
 
+  const identities = data.user?.identities;
+  if (data.user && Array.isArray(identities) && identities.length === 0) {
+    redirect(withQueryFlag("/signup?error=exists", "signup_exists"));
+  }
+
   if (!data.session) {
-    redirect("/?email_sent=1");
+    redirect(withQueryFlag("/login", "email_sent"));
   }
 
   redirect(nextPath === "/" ? "/?welcome=1" : nextPath);
@@ -170,7 +199,29 @@ export async function signIn(formData: FormData) {
   });
 
   if (error) {
+    console.error("error code", error.code);
     console.error("Supabase signIn error:", error.message);
+    const code = (error as { code?: string }).code ?? "";
+
+    switch (code) {
+      case "email_not_confirmed":
+        redirect(withQueryFlag("/login", "email_not_confirmed"));
+      case "invalid_credentials":
+      case "user_not_found":
+        redirect(withQueryFlag("/login?error=invalid", "invalid_credentials"));
+      case "user_banned":
+        redirect(withQueryFlag("/login", "user_banned"));
+      case "over_request_rate_limit":
+        redirect(withQueryFlag("/login", "rate_limited"));
+      case "provider_disabled":
+      case "email_provider_disabled":
+        redirect(withQueryFlag("/login", "login_provider_disabled"));
+      case "captcha_failed":
+        redirect(withQueryFlag("/login", "captcha_failed"));
+      default:
+        break;
+    }
+
     redirect("/login?error=invalid");
   }
 

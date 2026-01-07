@@ -1,9 +1,9 @@
 import Link from "next/link";
-
 import MobileMenu from "@/components/nav/mobile-menu";
 import UserMenu from "@/components/nav/user-menu";
 import { Button } from "@/components/ui/button";
 import { getSupabaseServerClientReadOnly } from "@/lib/supabase/server";
+import { Logo } from "../ui/logo";
 
 export default async function SiteHeader() {
   const supabase = getSupabaseServerClientReadOnly();
@@ -15,60 +15,67 @@ export default async function SiteHeader() {
     "익명";
 
   return (
-    <div className="sticky top-0 z-50 border-b border-border/60 bg-background/80 backdrop-blur">
-      <div className="mx-auto flex w-full max-w-5xl items-center justify-between gap-4 px-6 py-3">
-        <div className="flex items-center gap-3">
-          <Link
-            href="/"
-            aria-label="홈으로"
-            className="flex h-10 w-10 items-center justify-center rounded-2xl bg-primary text-sm font-semibold text-primary-foreground"
-          >
-            AW
+    <header className="sticky top-0 z-50 bg-[#014651]/90 backdrop-blur-xl border-b border-[#CEF431]/20">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex items-center justify-between h-20">
+          <Link href='/' className="flex items-center gap-4">
+            <div className="relative">
+              <Logo className="w-12 h-12" variant="professional" />
+              <div className="absolute -top-1 -right-1 w-3 h-3 bg-[#CEF431] animate-pulse" />
+            </div>
+            <div>
+              <h1 className="font-bold text-[#CEF431] tracking-tight">AutoWorld</h1>
+              <p className="text-xs text-[#CEF431]/60">Enterprise Automation Hub</p>
+            </div>
           </Link>
-          <div>
-            <p className="text-sm font-semibold tracking-tight">AutoWorld</p>
-            <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground">
-              자동화 커뮤니티
-            </p>
-          </div>
-        </div>
-        <nav className="hidden items-center gap-6 text-sm text-muted-foreground md:flex">
-          <Link className="hover:text-foreground" href="/feed">
-            피드
-          </Link>
-          <Link className="hover:text-foreground" href="/notices">
-            공지사항
-          </Link>
-          {user && (
-            <Link className="hover:text-foreground" href="/requests">
-              버그/요청
+          <nav className="hidden md:flex items-center gap-8">
+            <Link
+              href="/feed"
+              className="text-sm text-[#CEF431]/80 hover:text-[#CEF431] transition-colors"
+            >
+              피드
             </Link>
-          )}
-          <Link className="hover:text-foreground" href="/#guide">
-            공유 가이드
-          </Link>
-        </nav>
-        <div className="flex items-center gap-2">
-          <MobileMenu
-            isAuthenticated={Boolean(user)}
-            displayName={displayName}
-          />
-          {user ? (
-            <div className="hidden md:block">
-              <UserMenu displayName={displayName} />
+            <Link
+              href="/notices"
+              className="text-sm text-[#CEF431]/80 hover:text-[#CEF431] transition-colors"
+            >
+              공지 사항
+            </Link>
+            <Link
+              href="/requests"
+              className="text-sm text-[#CEF431]/80 hover:text-[#CEF431] transition-colors"
+            >
+              버그 리포트
+            </Link>
+            <Link
+              href="/guide"
+              className="text-sm text-[#CEF431]/80 hover:text-[#CEF431] transition-colors"
+            >
+              가이드
+            </Link>
+            <div className="flex items-center gap-2">
+              <MobileMenu
+                isAuthenticated={Boolean(user)}
+                displayName={displayName}
+              />
+              {user ? (
+                <div className="hidden md:block">
+                  <UserMenu displayName={displayName} />
+                </div>
+              ) : (
+                <div className="hidden items-center gap-2 md:flex">
+                  <Button asChild variant="ghost" size="sm">
+                    <Link href="/login">로그인</Link>
+                  </Button>
+                  <Button asChild className="rounded-full px-5" size="sm">
+                    <Link href="/signup">회원가입</Link>
+                  </Button>
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="hidden items-center gap-2 md:flex">
-              <Button asChild variant="ghost" size="sm">
-                <Link href="/login">로그인</Link>
-              </Button>
-              <Button asChild className="rounded-full px-5" size="sm">
-                <Link href="/signup">회원가입</Link>
-              </Button>
-            </div>
-          )}
+          </nav>
         </div>
       </div>
-    </div>
+    </header>
   );
 }

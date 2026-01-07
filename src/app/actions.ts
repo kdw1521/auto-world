@@ -116,7 +116,7 @@ export async function signUp(formData: FormData) {
 
   const supabase = getSupabaseServerClient();
   const displayName = extractDisplayName(email);
-  const { error } = await supabase.auth.signUp({
+  const { data, error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -128,11 +128,26 @@ export async function signUp(formData: FormData) {
 
   if (error) {
     console.error("Supabase signUp error:", error.message);
+    const code = (error as { code?: string }).code ?? "";
     const message = error.message.toLowerCase();
+
     if (message.includes("password")) {
       redirect("/signup?error=password");
     }
-    redirect("/signup?error=exists");
+    if (
+      code === "email_exists" ||
+      message.includes("already registered") ||
+      message.includes("already exists") ||
+      message.includes("signup is not allowed for existing users")
+    ) {
+      redirect("/signup?error=exists");
+    }
+
+    redirect("/signup?error=invalid");
+  }
+
+  if (!data.session) {
+    redirect("/?email_sent=1");
   }
 
   redirect(nextPath === "/" ? "/?welcome=1" : nextPath);

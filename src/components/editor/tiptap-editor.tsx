@@ -27,6 +27,7 @@ type TiptapFieldProps = {
   name?: string;
   defaultValue?: string;
   className?: string;
+  onChange?: (value: string) => void;
 };
 
 const IMAGE_EXTENSIONS = [
@@ -117,6 +118,7 @@ export function TiptapField({
   name = "content",
   defaultValue = "",
   className,
+  onChange,
 }: TiptapFieldProps) {
   const [value, setValue] = React.useState(defaultValue);
 
@@ -183,7 +185,9 @@ export function TiptapField({
       },
     },
     onUpdate({ editor }) {
-      setValue(editor.getHTML());
+      const nextValue = editor.getHTML();
+      setValue(nextValue);
+      onChange?.(nextValue);
     },
   });
 

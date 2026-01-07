@@ -1,17 +1,12 @@
 import Link from "next/link";
-import Image from "next/image";
-import { Lock } from "lucide-react";
 import dayjs from "dayjs";
 import HeroSection from "@/components/sections/hero";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import Posts from "@/components/ui/posts";
-import { Separator } from "@/components/ui/separator";
 import { getSupabaseServerClientReadOnly } from "@/lib/supabase/server";
 import SearchBar from "@/components/ui/searchbar";
 import CategoriesBar from "@/components/ui/categoriesbar";
-import SiteFooter from "@/components/sections/site-footer";
 
 function estimateReadTime(text?: string | null) {
   if (!text) return "1 min read";
@@ -96,6 +91,29 @@ export default async function Home() {
 
   const postIds = (posts ?? []).map((post) => post.id);
   const likedPostIds = new Set<number>();
+  const commentCountByPostId = new Map<string, number>();
+
+  if (postIds.length > 0) {
+    const { data: postCommentsData, error: postCommentsError } = await supabase
+      .from("post_comments")
+      .select("post_id")
+      .in("post_id", postIds);
+
+    if (postCommentsError) {
+      console.error(
+        "Supabase post comments fetch error:",
+        postCommentsError.message
+      );
+    }
+
+    (postCommentsData ?? []).forEach((comment) => {
+      const postId = String(comment.post_id);
+      commentCountByPostId.set(
+        postId,
+        (commentCountByPostId.get(postId) ?? 0) + 1
+      );
+    });
+  }
 
   if (user && postIds.length > 0) {
     const { data: likesData, error: likesError } = await supabase
@@ -118,9 +136,9 @@ export default async function Home() {
     const viewCount = Number.isFinite(viewCountRaw) ? viewCountRaw : 0;
     const likeCountRaw = Number(post.likes ?? 0);
     const likeCount = Number.isFinite(likeCountRaw) ? likeCountRaw : 0;
+    const commentCount = commentCountByPostId.get(String(post.id)) ?? 0;
     const authorName = post.author_username ?? "익명";
-    const initial =
-      authorName.trim().charAt(0).toUpperCase() || "A";
+    const initial = authorName.trim().charAt(0).toUpperCase() || "A";
     const excerptSource = post.content_text ?? "";
     const excerpt =
       excerptSource.length > 160
@@ -141,15 +159,21 @@ export default async function Home() {
         initial,
       },
       likes: likeCount,
-      comments: 0,
+      comments: commentCount,
       views: viewCount,
       href: `/posts/${post.id}`,
     };
   });
 
   const sidebarStats = [
-    { label: "전체 게시글", value: (totalPostCount ?? 0).toLocaleString("ko-KR") },
-    { label: "이번주 게시글", value: (weeklyPostCount ?? 0).toLocaleString("ko-KR") },
+    {
+      label: "전체 게시글",
+      value: (totalPostCount ?? 0).toLocaleString("ko-KR"),
+    },
+    {
+      label: "이번주 게시글",
+      value: (weeklyPostCount ?? 0).toLocaleString("ko-KR"),
+    },
     { label: "총 좋아요", value: likeTotal.toLocaleString("ko-KR") },
     { label: "총 댓글", value: (commentCount ?? 0).toLocaleString("ko-KR") },
   ];
@@ -164,7 +188,6 @@ export default async function Home() {
             <CategoriesBar />
           </section>
         </div>
-
       </div>
 
       <section id="feed" className="mx-auto w-full max-w-6xl px-6 -mt-14">
@@ -224,7 +247,7 @@ export default async function Home() {
             </Card>
           </aside>
         </div>
-      </section >
-    </div >
+      </section>
+    </div>
   );
 }

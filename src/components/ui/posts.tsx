@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
@@ -6,13 +6,7 @@ import { motion } from "motion/react";
 import { Clock, Tag, MessageSquare, Eye } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import LikeButton from "@/components/posts/like-button";
 
 type PostCardData = {
@@ -40,6 +34,7 @@ type PostsProps = {
 };
 
 export default function Posts({ posts, likedPostIds = [] }: PostsProps) {
+  console.log("posers", posts);
   const [hoveredPost, setHoveredPost] = useState<number | null>(null);
   const likedIds = useMemo(() => new Set(likedPostIds), [likedPostIds]);
 
@@ -114,7 +109,7 @@ export default function Posts({ posts, likedPostIds = [] }: PostsProps) {
             {/* Footer */}
             <div className="flex items-center justify-between border-t border-[#EAF4F4]/10 pt-6">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center border border-[#03D26F]/30 bg-gradient-to-br from-[#03D26F]/20 to-[#03D26F]/10">
+                <div className="flex h-10 w-10 items-center justify-center border border-[#03D26F]/30 bg-linear-to-br from-[#03D26F]/20 to-[#03D26F]/10">
                   <span className="text-xs text-[#CEF431]">
                     {post.author.initial}
                   </span>
@@ -122,7 +117,9 @@ export default function Posts({ posts, likedPostIds = [] }: PostsProps) {
                 <div>
                   <p className="text-sm text-[#EAF4F4]">{post.author.name}</p>
                   {post.author.role ? (
-                    <p className="text-xs text-[#EAF4F4]/60">{post.author.role}</p>
+                    <p className="text-xs text-[#EAF4F4]/60">
+                      {post.author.role}
+                    </p>
                   ) : null}
                 </div>
               </div>

@@ -8,6 +8,7 @@ import TopActionsMenu from "@/components/nav/top-actions-menu";
 import ToastEvents from "@/components/notifications/toast-events";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/next";
+import SiteFooter from "@/components/sections/site-footer";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ??
@@ -109,6 +110,7 @@ export default function RootLayout({
         </Suspense>
         <Toaster />
         <Analytics />
+        <SiteFooter />
       </body>
     </html>
   );

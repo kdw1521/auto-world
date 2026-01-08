@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import { motion } from "motion/react";
 import {
@@ -27,6 +28,7 @@ type FeedPost = {
   author_username: string | null;
   views: number | null;
   likes: number | null;
+  comments?: number | null;
 };
 
 type FeedClientProps = {
@@ -66,10 +68,15 @@ function getExcerpt(value: string | null, maxLength = 140) {
 }
 
 export default function FeedClient({ posts, likedPostIds }: FeedClientProps) {
+  const router = useRouter();
   const [selectedSort, setSelectedSort] = useState<SortKey>("latest");
   const [searchQuery, setSearchQuery] = useState("");
 
   const likedIds = useMemo(() => new Set(likedPostIds), [likedPostIds]);
+
+  const handleNavigate = (href: string) => {
+    router.push(href);
+  };
 
   const filteredPosts = useMemo(() => {
     const normalized = searchQuery.trim().toLowerCase();
@@ -167,6 +174,9 @@ export default function FeedClient({ posts, likedPostIds }: FeedClientProps) {
                   const likeCount = Number.isFinite(post.likes ?? 0)
                     ? Number(post.likes ?? 0)
                     : 0;
+                  const commentCount = Number.isFinite(post.comments ?? 0)
+                    ? Number(post.comments ?? 0)
+                    : 0;
                   return (
                     <motion.div
                       key={post.id}
@@ -174,7 +184,18 @@ export default function FeedClient({ posts, likedPostIds }: FeedClientProps) {
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.05 }}
                     >
-                      <Card className="p-6 bg-[#161514]/30 border border-[#EAF4F4]/10 hover:border-[#CEF431]/40 transition-all rounded-none group">
+                      <Card
+                        role="link"
+                        tabIndex={0}
+                        onClick={() => handleNavigate(`/posts/${post.id}`)}
+                        onKeyDown={(event) => {
+                          if (event.key === "Enter" || event.key === " ") {
+                            event.preventDefault();
+                            handleNavigate(`/posts/${post.id}`);
+                          }
+                        }}
+                        className="group cursor-pointer rounded-none border border-[#EAF4F4]/10 bg-[#161514]/30 p-6 transition-all hover:border-[#CEF431]/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#03D26F]/60 focus-visible:outline-offset-2"
+                      >
                         {/* Post Header */}
                         <div className="flex items-start justify-between mb-3">
                           <div className="flex-1">
@@ -192,6 +213,7 @@ export default function FeedClient({ posts, likedPostIds }: FeedClientProps) {
 
                             <Link
                               href={`/posts/${post.id}`}
+                              onClick={(event) => event.stopPropagation()}
                               className="text-lg font-normal text-[#CEF431] mb-2 group-hover:text-[#03D26F] transition-colors leading-snug block"
                             >
                               {post.title ?? "제목 없음"}
@@ -232,14 +254,18 @@ export default function FeedClient({ posts, likedPostIds }: FeedClientProps) {
                                 className="w-3.5 h-3.5"
                                 strokeWidth={1.5}
                               />
-                              0
+                              {commentCount}
                             </div>
                             <div className="flex items-center gap-1">
-                              <Clock className="w-3.5 h-3.5" strokeWidth={1.5} />
+                              <Clock
+                                className="w-3.5 h-3.5"
+                                strokeWidth={1.5}
+                              />
                               {estimateReadTime(post.content_text)}
                             </div>
                             <Link
                               href={`/posts/${post.id}`}
+                              onClick={(event) => event.stopPropagation()}
                               className="flex items-center gap-1 text-[#CEF431] hover:text-[#03D26F]"
                             >
                               <span>보기</span>
@@ -255,14 +281,14 @@ export default function FeedClient({ posts, likedPostIds }: FeedClientProps) {
             </div>
 
             {/* Load More */}
-            <div className="mt-8 text-center">
+            {/* <div className="mt-8 text-center">
               <Button
                 type="button"
                 className="bg-transparent border border-[#CEF431]/30 text-[#CEF431] hover:bg-[#CEF431]/10 hover:border-[#CEF431] rounded-none px-8 py-3"
               >
                 더 보기
               </Button>
-            </div>
+            </div> */}
           </div>
         </div>
       </main>

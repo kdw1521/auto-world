@@ -136,6 +136,7 @@ export default async function PostDetail({ params, searchParams }: PostDetailPro
     <PostDetailClient
       postId={postId}
       postAuthorId={post.author_id}
+      currentUserId={userData.user?.id ?? null}
       title={post.title ?? "제목 없음"}
       contentHtml={contentHtml}
       createdAt={post.created_at}

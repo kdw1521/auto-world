@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState, useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import { motion } from "motion/react";
 import {
@@ -13,7 +14,12 @@ import {
   PencilLine,
 } from "lucide-react";
 
-import { createComment } from "@/app/actions";
+import {
+  createComment,
+  updateComment,
+  type CommentActionState,
+  type CommentUpdateActionState,
+} from "@/app/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -39,6 +45,7 @@ type RelatedPost = {
 type PostDetailClientProps = {
   postId: number;
   postAuthorId: string;
+  currentUserId: string | null;
   title: string;
   contentHtml: string;
   createdAt: string | null;
@@ -53,6 +60,24 @@ type PostDetailClientProps = {
   comments: CommentItem[];
   repliesByParent: Record<number, CommentItem[]>;
   relatedPosts: RelatedPost[];
+};
+
+const COMMENT_ACTION_INITIAL_STATE: CommentActionState = { status: "idle" };
+
+const COMMENT_ACTION_ERROR_MESSAGES: Record<string, string> = {
+  invalid: "댓글 내용을 입력해 주세요.",
+  depth: "답글은 한 번만 작성할 수 있습니다.",
+  failed: "댓글 등록에 실패했습니다. 잠시 후 다시 시도해 주세요.",
+};
+
+const COMMENT_UPDATE_INITIAL_STATE: CommentUpdateActionState = {
+  status: "idle",
+};
+
+const COMMENT_UPDATE_ERROR_MESSAGES: Record<string, string> = {
+  invalid: "댓글 내용을 입력해 주세요.",
+  forbidden: "수정 권한이 없습니다.",
+  failed: "댓글 수정에 실패했습니다. 잠시 후 다시 시도해 주세요.",
 };
 
 function formatDate(value: string | null) {
@@ -72,6 +97,7 @@ function estimateReadTime(html: string) {
 export default function PostDetailClient({
   postId,
   postAuthorId,
+  currentUserId,
   title,
   contentHtml,
   createdAt,
@@ -87,7 +113,196 @@ export default function PostDetailClient({
   repliesByParent,
   relatedPosts,
 }: PostDetailClientProps) {
+  const router = useRouter();
   const [replyingTo, setReplyingTo] = useState<number | null>(null);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editingContent, setEditingContent] = useState("");
+  const [commentItems, setCommentItems] = useState<CommentItem[]>(comments);
+  const [replyMap, setReplyMap] =
+    useState<Record<number, CommentItem[]>>(repliesByParent);
+  const [commentTotal, setCommentTotal] = useState(commentCount);
+  const [commentErrorMessage, setCommentErrorMessage] = useState(
+    commentError ?? ""
+  );
+  const [commentState, commentAction] = useActionState(
+    createComment,
+    COMMENT_ACTION_INITIAL_STATE
+  );
+  const [updateState, updateAction] = useActionState(
+    updateComment,
+    COMMENT_UPDATE_INITIAL_STATE
+  );
+  const mainFormRef = useRef<HTMLFormElement | null>(null);
+  const replyFormRefs = useRef(new Map<number, HTMLFormElement>());
+  const lastInsertedIdRef = useRef<number | null>(null);
+
+  const startEdit = (id: number, content: string) => {
+    setEditingId(id);
+    setEditingContent(content);
+    setCommentErrorMessage("");
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingContent("");
+    setCommentErrorMessage("");
+  };
+
+  useEffect(() => {
+    setCommentItems(comments);
+  }, [comments]);
+
+  useEffect(() => {
+    setReplyMap(repliesByParent);
+  }, [repliesByParent]);
+
+  useEffect(() => {
+    setCommentTotal(commentCount);
+  }, [commentCount]);
+
+  useEffect(() => {
+    setCommentErrorMessage(commentError ?? "");
+  }, [commentError]);
+
+  useEffect(() => {
+    if (commentState.status !== "success" || !commentState.comment) {
+      return;
+    }
+
+    const inserted = commentState.comment;
+    if (lastInsertedIdRef.current === inserted.id) {
+      return;
+    }
+    lastInsertedIdRef.current = inserted.id;
+
+    const parentId = inserted.parent_id;
+    if (parentId !== null) {
+      const replyExistsInProps = (repliesByParent[parentId] ?? []).some(
+        (reply) => reply.id === inserted.id
+      );
+      const replyExistsInState = (replyMap[parentId] ?? []).some(
+        (reply) => reply.id === inserted.id
+      );
+
+      setCommentErrorMessage("");
+      setReplyingTo(null);
+      replyFormRefs.current.get(parentId)?.reset();
+
+      if (replyExistsInProps || replyExistsInState) {
+        return;
+      }
+
+      setCommentTotal((prev) => prev + 1);
+      setReplyMap((prev) => {
+        const nextReplies = prev[parentId] ?? [];
+        return {
+          ...prev,
+          [parentId]: [
+            ...nextReplies,
+            {
+              id: inserted.id,
+              content: inserted.content,
+              author_id: inserted.author_id,
+              author_username: inserted.author_username,
+              created_at: inserted.created_at,
+            },
+          ],
+        };
+      });
+      return;
+    }
+
+    const commentExistsInProps = comments.some(
+      (comment) => comment.id === inserted.id
+    );
+    const commentExistsInState = commentItems.some(
+      (comment) => comment.id === inserted.id
+    );
+
+    setCommentErrorMessage("");
+    mainFormRef.current?.reset();
+
+    if (commentExistsInProps || commentExistsInState) {
+      return;
+    }
+
+    setCommentTotal((prev) => prev + 1);
+    setCommentItems((prev) => [
+      ...prev,
+      {
+        id: inserted.id,
+        content: inserted.content,
+        author_id: inserted.author_id,
+        author_username: inserted.author_username,
+        created_at: inserted.created_at,
+      },
+    ]);
+  }, [commentState]);
+
+  useEffect(() => {
+    if (commentState.status !== "error") {
+      return;
+    }
+
+    if (commentState.error === "unauthenticated") {
+      router.push(`/login?next=/posts/${postId}`);
+      return;
+    }
+
+    const message =
+      COMMENT_ACTION_ERROR_MESSAGES[commentState.error ?? "failed"] ??
+      COMMENT_ACTION_ERROR_MESSAGES.failed;
+    setCommentErrorMessage(message);
+  }, [commentState, postId, router]);
+
+  useEffect(() => {
+    if (updateState.status !== "success" || !updateState.comment) {
+      return;
+    }
+
+    const { id, content } = updateState.comment;
+    setCommentErrorMessage("");
+    setEditingId(null);
+    setEditingContent("");
+
+    setCommentItems((prev) =>
+      prev.map((comment) =>
+        comment.id === id ? { ...comment, content } : comment
+      )
+    );
+    setReplyMap((prev) => {
+      let changed = false;
+      const next: Record<number, CommentItem[]> = {};
+      Object.entries(prev).forEach(([key, replies]) => {
+        const parentId = Number(key);
+        const updatedReplies = replies.map((reply) => {
+          if (reply.id === id) {
+            changed = true;
+            return { ...reply, content };
+          }
+          return reply;
+        });
+        next[parentId] = updatedReplies;
+      });
+      return changed ? next : prev;
+    });
+  }, [updateState]);
+
+  useEffect(() => {
+    if (updateState.status !== "error") {
+      return;
+    }
+
+    if (updateState.error === "unauthenticated") {
+      router.push(`/login?next=/posts/${postId}`);
+      return;
+    }
+
+    const message =
+      COMMENT_UPDATE_ERROR_MESSAGES[updateState.error ?? "failed"] ??
+      COMMENT_UPDATE_ERROR_MESSAGES.failed;
+    setCommentErrorMessage(message);
+  }, [updateState, postId, router]);
 
   return (
     <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 relative">
@@ -109,7 +324,7 @@ export default function PostDetailClient({
                     <Button asChild size="sm" variant="ghost">
                       <Link
                         href={`/posts/${postId}/edit`}
-                        className="flex items-center gap-2"
+                        className="flex items-center gap-2 cursor-pointer"
                       >
                         <PencilLine className="w-4 h-4" />
                         수정
@@ -181,7 +396,7 @@ export default function PostDetailClient({
                 />
                 <div className="flex items-center gap-2 text-sm text-[#EAF4F4]/70">
                   <MessageSquare className="w-4 h-4" />
-                  {commentCount}
+                  {commentTotal}
                 </div>
               </div>
             </Card>
@@ -198,19 +413,21 @@ export default function PostDetailClient({
                 <div className="flex items-center gap-2 mb-6">
                   <MessageSquare className="w-5 h-5 text-[#CEF431]" />
                   <h2 className="text-xl font-bold text-[#CEF431]">
-                    Comments ({commentCount})
+                    Comments ({commentTotal})
                   </h2>
                 </div>
 
-                {commentError ? (
+                {commentErrorMessage ? (
                   <div className="mb-6 border border-[#CEF431]/40 bg-[#CEF431]/10 px-4 py-3 text-sm text-[#CEF431]">
-                    {commentError}
+                    {commentErrorMessage}
                   </div>
                 ) : null}
 
                 {/* Add Comment */}
                 <form
-                  action={createComment}
+                  action={commentAction}
+                  ref={mainFormRef}
+                  onSubmit={() => setCommentErrorMessage("")}
                   className="mb-8 pb-8 border-b border-[#CEF431]/20"
                 >
                   <input type="hidden" name="postId" value={postId} />
@@ -219,7 +436,7 @@ export default function PostDetailClient({
                     placeholder="Share your thoughts or ask a question..."
                     className="mb-4 min-h-25 rounded-none border-2 border-[#CEF431]/30 bg-[#014651]/50 text-[#CEF431] placeholder:text-[#CEF431]/40 focus:border-[#CEF431]"
                   />
-                  <SubmitButton className="bg-[#CEF431] text-[#014651] hover:bg-[#CEF431]/90 rounded-none">
+                  <SubmitButton className="bg-[#CEF431] text-[#014651] hover:bg-[#CEF431]/90 rounded-none cursor-pointer">
                     <MessageSquarePlus className="w-4 h-4 mr-2" />
                     댓글 등록
                   </SubmitButton>
@@ -227,12 +444,12 @@ export default function PostDetailClient({
 
                 {/* Comments List */}
                 <div className="space-y-6">
-                  {comments.length === 0 ? (
+                  {commentItems.length === 0 ? (
                     <p className="text-sm text-[#CEF431]/70">
                       아직 댓글이 없습니다.
                     </p>
                   ) : (
-                    comments.map((comment) => (
+                    commentItems.map((comment) => (
                       <div
                         key={comment.id}
                         className="p-6 bg-[#014651]/30 border border-[#CEF431]/10"
@@ -260,27 +477,93 @@ export default function PostDetailClient({
                                   {formatDate(comment.created_at)}
                                 </p>
                               </div>
-                              <Button
-                                type="button"
-                                size="sm"
-                                variant="ghost"
-                                onClick={() =>
-                                  setReplyingTo((prev) =>
-                                    prev === comment.id ? null : comment.id
-                                  )
-                                }
-                                className="h-7 px-2 text-xs text-[#CEF431]/80 hover:text-[#CEF431]"
-                              >
-                                {replyingTo === comment.id ? "취소" : "답글"}
-                              </Button>
+                              <div className="flex items-center gap-2">
+                                {comment.author_id &&
+                                comment.author_id === currentUserId ? (
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="ghost"
+                                    onClick={() =>
+                                      editingId === comment.id
+                                        ? cancelEdit()
+                                        : startEdit(comment.id, comment.content)
+                                    }
+                                    className="h-7 px-2 text-xs text-[#CEF431]/80 hover:text-[#CEF431] cursor-pointer"
+                                  >
+                                    {editingId === comment.id ? "취소" : "수정"}
+                                  </Button>
+                                ) : null}
+                                <Button
+                                  type="button"
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() =>
+                                    setReplyingTo((prev) =>
+                                      prev === comment.id ? null : comment.id
+                                    )
+                                  }
+                                  className="h-7 px-2 text-xs text-[#CEF431]/80 hover:text-[#CEF431] cursor-pointer"
+                                >
+                                  {replyingTo === comment.id ? "취소" : "답글"}
+                                </Button>
+                              </div>
                             </div>
-                            <p className="text-[#CEF431]/80 text-sm leading-relaxed whitespace-pre-wrap">
-                              {comment.content}
-                            </p>
+                            {editingId === comment.id ? (
+                              <form
+                                action={updateAction}
+                                onSubmit={() => setCommentErrorMessage("")}
+                                className="mt-3 space-y-3"
+                              >
+                                <input
+                                  type="hidden"
+                                  name="postId"
+                                  value={postId}
+                                />
+                                <input
+                                  type="hidden"
+                                  name="commentId"
+                                  value={comment.id}
+                                />
+                                <Textarea
+                                  name="content"
+                                  value={editingContent}
+                                  onChange={(event) =>
+                                    setEditingContent(event.target.value)
+                                  }
+                                  className="min-h-20 rounded-none border-2 border-[#CEF431]/30 bg-[#014651]/50 text-[#CEF431] placeholder:text-[#CEF431]/40 focus:border-[#CEF431]"
+                                />
+                                <div className="flex items-center gap-2">
+                                  <SubmitButton className="bg-[#CEF431] text-[#014651] hover:bg-[#CEF431]/90 rounded-none cursor-pointer">
+                                    수정 저장
+                                  </SubmitButton>
+                                  <Button
+                                    type="button"
+                                    variant="outline"
+                                    onClick={cancelEdit}
+                                    className="rounded-none border-[#CEF431]/30 text-[#CEF431] hover:border-[#CEF431]"
+                                  >
+                                    취소
+                                  </Button>
+                                </div>
+                              </form>
+                            ) : (
+                              <p className="text-[#CEF431]/80 text-sm leading-relaxed whitespace-pre-wrap">
+                                {comment.content}
+                              </p>
+                            )}
 
                             {replyingTo === comment.id ? (
                               <form
-                                action={createComment}
+                                action={commentAction}
+                                ref={(node) => {
+                                  if (node) {
+                                    replyFormRefs.current.set(comment.id, node);
+                                  } else {
+                                    replyFormRefs.current.delete(comment.id);
+                                  }
+                                }}
+                                onSubmit={() => setCommentErrorMessage("")}
                                 className="mt-4 space-y-3"
                               >
                                 <input
@@ -298,7 +581,7 @@ export default function PostDetailClient({
                                   placeholder="답글을 입력해 주세요."
                                   className="min-h-20 rounded-none border-2 border-[#CEF431]/30 bg-[#014651]/50 text-[#CEF431] placeholder:text-[#CEF431]/40 focus:border-[#CEF431]"
                                 />
-                                <SubmitButton className="bg-[#CEF431] text-[#014651] hover:bg-[#CEF431]/90 rounded-none">
+                                <SubmitButton className="bg-[#CEF431] text-[#014651] hover:bg-[#CEF431]/90 rounded-none cursor-pointer">
                                   답글 등록
                                 </SubmitButton>
                               </form>
@@ -306,26 +589,86 @@ export default function PostDetailClient({
                           </div>
                         </div>
 
-                        {(repliesByParent[comment.id] ?? []).length > 0 ? (
+                        {(replyMap[comment.id] ?? []).length > 0 ? (
                           <div className="mt-4 space-y-3 pl-10">
-                            {repliesByParent[comment.id].map((reply) => (
+                            {replyMap[comment.id].map((reply) => (
                               <div
                                 key={reply.id}
                                 className="border-l border-[#CEF431]/20 pl-4"
                               >
-                                <div className="flex items-center gap-2 text-xs text-[#CEF431]/60 mb-1">
-                                  <span>{reply.author_username ?? "익명"}</span>
-                                  {reply.author_id === postAuthorId ? (
-                                    <span className="border border-[#CEF431]/40 px-1.5 py-0.5 text-[10px] text-[#CEF431]/80">
-                                      작성자
+                                <div className="flex items-center justify-between gap-2 text-xs text-[#CEF431]/60 mb-1">
+                                  <div className="flex items-center gap-2">
+                                    <span>
+                                      {reply.author_username ?? "익명"}
                                     </span>
+                                    {reply.author_id === postAuthorId ? (
+                                      <span className="border border-[#CEF431]/40 px-1.5 py-0.5 text-[10px] text-[#CEF431]/80">
+                                        작성자
+                                      </span>
+                                    ) : null}
+                                    <span>·</span>
+                                    <span>{formatDate(reply.created_at)}</span>
+                                  </div>
+                                  {reply.author_id &&
+                                  reply.author_id === currentUserId ? (
+                                    <Button
+                                      type="button"
+                                      size="sm"
+                                      variant="ghost"
+                                      onClick={() =>
+                                        editingId === reply.id
+                                          ? cancelEdit()
+                                          : startEdit(reply.id, reply.content)
+                                      }
+                                      className="h-6 px-2 text-[10px] text-[#CEF431]/80 hover:text-[#CEF431] cursor-pointer"
+                                    >
+                                      {editingId === reply.id ? "취소" : "수정"}
+                                    </Button>
                                   ) : null}
-                                  <span>·</span>
-                                  <span>{formatDate(reply.created_at)}</span>
                                 </div>
-                                <div className="text-sm text-[#CEF431]/80 whitespace-pre-wrap">
-                                  {reply.content}
-                                </div>
+                                {editingId === reply.id ? (
+                                  <form
+                                    action={updateAction}
+                                    onSubmit={() => setCommentErrorMessage("")}
+                                    className="mt-2 space-y-3"
+                                  >
+                                    <input
+                                      type="hidden"
+                                      name="postId"
+                                      value={postId}
+                                    />
+                                    <input
+                                      type="hidden"
+                                      name="commentId"
+                                      value={reply.id}
+                                    />
+                                    <Textarea
+                                      name="content"
+                                      value={editingContent}
+                                      onChange={(event) =>
+                                        setEditingContent(event.target.value)
+                                      }
+                                      className="min-h-16 rounded-none border-2 border-[#CEF431]/30 bg-[#014651]/50 text-[#CEF431] placeholder:text-[#CEF431]/40 focus:border-[#CEF431]"
+                                    />
+                                    <div className="flex items-center gap-2">
+                                      <SubmitButton className="bg-[#CEF431] text-[#014651] hover:bg-[#CEF431]/90 rounded-none cursor-pointer">
+                                        수정 저장
+                                      </SubmitButton>
+                                      <Button
+                                        type="button"
+                                        variant="outline"
+                                        onClick={cancelEdit}
+                                        className="rounded-none border-[#CEF431]/30 text-[#CEF431] hover:border-[#CEF431] cursor-pointer"
+                                      >
+                                        취소
+                                      </Button>
+                                    </div>
+                                  </form>
+                                ) : (
+                                  <div className="text-sm text-[#CEF431]/80 whitespace-pre-wrap">
+                                    {reply.content}
+                                  </div>
+                                )}
                               </div>
                             ))}
                           </div>

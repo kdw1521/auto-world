@@ -455,24 +455,51 @@ export async function togglePostLike(postId: number) {
   };
 }
 
-export async function createComment(formData: FormData) {
+export type CommentActionState = {
+  status: "idle" | "success" | "error";
+  error?: "invalid" | "unauthenticated" | "depth" | "failed";
+  comment?: {
+    id: number;
+    post_id: number;
+    parent_id: number | null;
+    content: string;
+    author_id: string | null;
+    author_username: string | null;
+    created_at: string | null;
+  };
+};
+
+export type CommentUpdateActionState = {
+  status: "idle" | "success" | "error";
+  error?: "invalid" | "unauthenticated" | "forbidden" | "failed";
+  comment?: {
+    id: number;
+    content: string;
+    updated_at: string | null;
+  };
+};
+
+export async function createComment(
+  _prevState: CommentActionState,
+  formData: FormData
+): Promise<CommentActionState> {
   const postId = parsePostId(formData.get("postId"));
   const parentId = parseCommentId(formData.get("parentId"));
   const content = normalizeComment(String(formData.get("content") ?? ""));
 
   if (!postId) {
-    redirect("/feed");
+    return { status: "error", error: "invalid" };
   }
 
   if (!isValidComment(content)) {
-    redirect(`/posts/${postId}?comment_error=invalid#comments`);
+    return { status: "error", error: "invalid" };
   }
 
   const supabase = getSupabaseServerClient();
   const { data, error: userError } = await supabase.auth.getUser();
 
   if (userError || !data.user) {
-    redirect(`/login?next=/posts/${postId}`);
+    return { status: "error", error: "unauthenticated" };
   }
 
   if (parentId) {
@@ -488,7 +515,7 @@ export async function createComment(formData: FormData) {
       parent.post_id !== postId ||
       parent.parent_id
     ) {
-      redirect(`/posts/${postId}?comment_error=depth#comments`);
+      return { status: "error", error: "depth" };
     }
   }
 
@@ -497,41 +524,64 @@ export async function createComment(formData: FormData) {
     data.user.email?.split("@")[0] ??
     "익명";
 
-  const { error } = await supabase.from("post_comments").insert({
-    post_id: postId,
-    parent_id: parentId,
-    content,
-    author_id: data.user.id,
-    author_username: username,
-  });
+  const { data: insertedComment, error } = await supabase
+    .from("post_comments")
+    .insert({
+      post_id: postId,
+      parent_id: parentId,
+      content,
+      author_id: data.user.id,
+      author_username: username,
+    })
+    .select(
+      "id, post_id, parent_id, content, author_id, author_username, created_at"
+    )
+    .single();
 
-  if (error) {
-    console.error("Supabase comment insert error:", error.message);
-    redirect(`/posts/${postId}?comment_error=failed#comments`);
+  if (error || !insertedComment) {
+    console.error("Supabase comment insert error:", error?.message);
+    return { status: "error", error: "failed" };
   }
 
   revalidateTag("feed", { expire: 0 });
-  redirect(`/posts/${postId}?commented=1#comments`);
+  return {
+    status: "success",
+    comment: {
+      id: insertedComment.id,
+      post_id: Number(insertedComment.post_id),
+      parent_id:
+        insertedComment.parent_id === null
+          ? null
+          : Number(insertedComment.parent_id),
+      content: insertedComment.content,
+      author_id: insertedComment.author_id,
+      author_username: insertedComment.author_username,
+      created_at: insertedComment.created_at,
+    },
+  };
 }
 
-export async function updateComment(formData: FormData) {
+export async function updateComment(
+  _prevState: CommentUpdateActionState,
+  formData: FormData
+): Promise<CommentUpdateActionState> {
   const postId = parsePostId(formData.get("postId"));
   const commentId = parseCommentId(formData.get("commentId"));
   const content = normalizeComment(String(formData.get("content") ?? ""));
 
   if (!postId || !commentId) {
-    redirect("/feed");
+    return { status: "error", error: "invalid" };
   }
 
   if (!isValidComment(content)) {
-    redirect(`/posts/${postId}?comment_error=invalid#comments`);
+    return { status: "error", error: "invalid" };
   }
 
   const supabase = getSupabaseServerClient();
   const { data, error: userError } = await supabase.auth.getUser();
 
   if (userError || !data.user) {
-    redirect(`/login?next=/posts/${postId}`);
+    return { status: "error", error: "unauthenticated" };
   }
 
   const { data: comment, error: commentError } = await supabase
@@ -541,25 +591,33 @@ export async function updateComment(formData: FormData) {
     .single();
 
   if (commentError || !comment) {
-    redirect(`/posts/${postId}?comment_error=failed#comments`);
+    return { status: "error", error: "failed" };
   }
 
   if (comment.post_id !== postId || comment.author_id !== data.user.id) {
-    redirect(`/posts/${postId}`);
+    return { status: "error", error: "forbidden" };
   }
 
+  const updatedAt = new Date().toISOString();
   const { error } = await supabase
     .from("post_comments")
     .update({
       content,
-      updated_at: new Date().toISOString(),
+      updated_at: updatedAt,
     })
     .eq("id", commentId);
 
   if (error) {
     console.error("Supabase comment update error:", error.message);
-    redirect(`/posts/${postId}?comment_error=failed#comments`);
+    return { status: "error", error: "failed" };
   }
 
-  redirect(`/posts/${postId}?comment_updated=1#comments`);
+  return {
+    status: "success",
+    comment: {
+      id: commentId,
+      content,
+      updated_at: updatedAt,
+    },
+  };
 }

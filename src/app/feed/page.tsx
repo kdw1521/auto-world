@@ -16,7 +16,7 @@ type FeedPageProps = {
 type FeedSortKey = "latest" | "popular" | "views";
 
 const DEFAULT_SORT: FeedSortKey = "latest";
-const FEED_PAGE_SIZE = 2;
+const FEED_PAGE_SIZE = 20;
 const FEED_REVALIDATE_SECONDS = 60;
 
 type FeedPostRow = {
@@ -80,10 +80,7 @@ const getCachedFeedData = unstable_cache(
       postsQuery = postsQuery.order("created_at", { ascending: false });
     }
 
-    const { data: posts, error } = await postsQuery.range(
-      rangeStart,
-      rangeEnd
-    );
+    const { data: posts, error } = await postsQuery.range(rangeStart, rangeEnd);
 
     if (error) {
       console.error("Supabase posts fetch error:", error.message);

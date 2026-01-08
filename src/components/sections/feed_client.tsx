@@ -1,18 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import dayjs from "dayjs";
 import { motion } from "motion/react";
-import {
-  ArrowUpRight,
-  Clock,
-  Eye,
-  Heart,
-  MessageSquare,
-  Search,
-} from "lucide-react";
+import { ArrowUpRight, Clock, Eye, MessageSquare, Search } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,12 +24,17 @@ type FeedPost = {
   comments?: number | null;
 };
 
+type SortKey = "latest" | "popular" | "views";
+
 type FeedClientProps = {
   posts: FeedPost[];
   likedPostIds: number[];
+  page: number;
+  hasNextPage: boolean;
+  hasPrevPage: boolean;
+  searchQuery: string;
+  sort: SortKey;
 };
-
-type SortKey = "latest" | "popular" | "views";
 
 const sortOptions: { id: SortKey; name: string }[] = [
   { id: "latest", name: "최신순" },
@@ -67,38 +65,62 @@ function getExcerpt(value: string | null, maxLength = 140) {
   return `${normalized.slice(0, maxLength)}...`;
 }
 
-export default function FeedClient({ posts, likedPostIds }: FeedClientProps) {
+function buildFeedHref({
+  page,
+  q,
+  sort,
+}: {
+  page?: number;
+  q?: string;
+  sort?: SortKey;
+}) {
+  const params = new URLSearchParams();
+  const trimmedQuery = q?.trim() ?? "";
+
+  if (trimmedQuery) {
+    params.set("q", trimmedQuery);
+  }
+  if (sort && sort !== "latest") {
+    params.set("sort", sort);
+  }
+  if (page && page > 1) {
+    params.set("page", String(page));
+  }
+
+  const query = params.toString();
+  return query ? `/feed?${query}` : "/feed";
+}
+
+export default function FeedClient({
+  posts,
+  likedPostIds,
+  page,
+  hasNextPage,
+  hasPrevPage,
+  searchQuery,
+  sort,
+}: FeedClientProps) {
   const router = useRouter();
-  const [selectedSort, setSelectedSort] = useState<SortKey>("latest");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [searchValue, setSearchValue] = useState(searchQuery);
 
   const likedIds = useMemo(() => new Set(likedPostIds), [likedPostIds]);
+
+  useEffect(() => {
+    setSearchValue(searchQuery);
+  }, [searchQuery]);
 
   const handleNavigate = (href: string) => {
     router.push(href);
   };
 
-  const filteredPosts = useMemo(() => {
-    const normalized = searchQuery.trim().toLowerCase();
-    const result = posts.filter((post) => {
-      if (!normalized) return true;
-      const title = post.title?.toLowerCase() ?? "";
-      const content = post.content_text?.toLowerCase() ?? "";
-      return title.includes(normalized) || content.includes(normalized);
-    });
+  const handleSearchSubmit = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    router.push(buildFeedHref({ page: 1, q: searchValue, sort }));
+  };
 
-    return result.sort((a, b) => {
-      if (selectedSort === "views") {
-        return (b.views ?? 0) - (a.views ?? 0);
-      }
-      if (selectedSort === "popular") {
-        return (b.likes ?? 0) - (a.likes ?? 0);
-      }
-      const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
-      const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
-      return timeB - timeA;
-    });
-  }, [posts, searchQuery, selectedSort]);
+  const handleSortChange = (nextSort: SortKey) => {
+    router.push(buildFeedHref({ page: 1, q: searchValue, sort: nextSort }));
+  };
 
   return (
     <div className="min-h-screen text-foreground">
@@ -117,9 +139,9 @@ export default function FeedClient({ posts, likedPostIds }: FeedClientProps) {
                     <button
                       key={option.id}
                       type="button"
-                      onClick={() => setSelectedSort(option.id)}
+                      onClick={() => handleSortChange(option.id)}
                       className={`w-full flex items-center justify-between px-4 py-2.5 text-sm transition-all border rounded-none ${
-                        selectedSort === option.id
+                        sort === option.id
                           ? "bg-[#CEF431]/10 border-[#CEF431]/50 text-[#CEF431]"
                           : "bg-[#161514]/30 border-[#EAF4F4]/10 text-[#EAF4F4]/70 hover:border-[#CEF431]/30"
                       }`}
@@ -140,7 +162,7 @@ export default function FeedClient({ posts, likedPostIds }: FeedClientProps) {
               animate={{ opacity: 1, y: 0 }}
               className="mb-8"
             >
-              <div className="relative">
+              <form onSubmit={handleSearchSubmit} className="relative">
                 <Search
                   className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#CEF431]/60"
                   strokeWidth={1.5}
@@ -148,23 +170,29 @@ export default function FeedClient({ posts, likedPostIds }: FeedClientProps) {
                 <Input
                   type="text"
                   placeholder="검색어를 입력하세요..."
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  className="w-full pl-12 pr-4 py-3 bg-[#161514]/30 border border-[#CEF431]/20 text-[#EAF4F4] placeholder:text-[#EAF4F4]/40 rounded-none focus:border-[#CEF431]/50"
+                  value={searchValue}
+                  onChange={(event) => setSearchValue(event.target.value)}
+                  className="w-full pl-12 pr-16 py-3 bg-[#161514]/30 border border-[#CEF431]/20 text-[#EAF4F4] placeholder:text-[#EAF4F4]/40 rounded-none focus:border-[#CEF431]/50"
                 />
-              </div>
+                <button
+                  type="submit"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 border border-[#CEF431]/40 bg-[#161514]/70 px-3 py-1.5 text-xs text-[#CEF431] transition-colors hover:border-[#CEF431] hover:text-[#03D26F] cursor-pointer"
+                >
+                  검색
+                </button>
+              </form>
             </motion.div>
 
             {/* Posts List */}
             <div className="space-y-4">
-              {filteredPosts.length === 0 ? (
+              {posts.length === 0 ? (
                 <Card className="p-6 bg-[#161514]/30 border border-[#EAF4F4]/10 rounded-none">
                   <p className="text-sm text-[#EAF4F4]/60">
                     일치하는 게시글이 없습니다.
                   </p>
                 </Card>
               ) : (
-                filteredPosts.map((post, index) => {
+                posts.map((post, index) => {
                   const authorName = post.author_username ?? "익명";
                   const initial =
                     authorName.trim().charAt(0).toUpperCase() || "A";
@@ -194,7 +222,7 @@ export default function FeedClient({ posts, likedPostIds }: FeedClientProps) {
                             handleNavigate(`/posts/${post.id}`);
                           }
                         }}
-                        className="group cursor-pointer rounded-none border border-[#EAF4F4]/10 bg-[#161514]/30 p-6 transition-all hover:border-[#CEF431]/40 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#03D26F]/60 focus-visible:outline-offset-2"
+                        className="group cursor-pointer rounded-none border border-[#EAF4F4]/10 bg-[#161514]/30 p-6 transition-all hover:border-[#CEF431]/40 focus-visible:outline focus-visible:outline-[#03D26F]/60 focus-visible:outline-offset-2"
                       >
                         {/* Post Header */}
                         <div className="flex items-start justify-between mb-3">
@@ -280,15 +308,54 @@ export default function FeedClient({ posts, likedPostIds }: FeedClientProps) {
               )}
             </div>
 
-            {/* Load More */}
-            {/* <div className="mt-8 text-center">
-              <Button
-                type="button"
-                className="bg-transparent border border-[#CEF431]/30 text-[#CEF431] hover:bg-[#CEF431]/10 hover:border-[#CEF431] rounded-none px-8 py-3"
-              >
-                더 보기
-              </Button>
-            </div> */}
+            {(hasPrevPage || hasNextPage) && (
+              <div className="mt-8 flex items-center justify-between">
+                {hasPrevPage ? (
+                  <Button asChild variant="outline" className="rounded-none">
+                    <Link
+                      href={buildFeedHref({
+                        page: page - 1,
+                        q: searchQuery,
+                        sort,
+                      })}
+                    >
+                      이전
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-none"
+                    disabled
+                  >
+                    이전
+                  </Button>
+                )}
+                {hasNextPage ? (
+                  <Button asChild variant="outline" className="rounded-none">
+                    <Link
+                      href={buildFeedHref({
+                        page: page + 1,
+                        q: searchQuery,
+                        sort,
+                      })}
+                    >
+                      다음
+                    </Link>
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="rounded-none"
+                    disabled
+                  >
+                    다음
+                  </Button>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </main>

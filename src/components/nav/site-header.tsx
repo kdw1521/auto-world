@@ -53,27 +53,23 @@ export default async function SiteHeader() {
             >
               가이드
             </Link>
-            <div className="flex items-center gap-2">
-              <MobileMenu
-                isAuthenticated={Boolean(user)}
-                displayName={displayName}
-              />
-              {user ? (
-                <div className="hidden md:block">
-                  <UserMenu displayName={displayName} />
-                </div>
-              ) : (
-                <div className="hidden items-center gap-2 md:flex">
-                  <Button asChild variant="ghost" size="sm">
-                    <Link href="/login">로그인</Link>
-                  </Button>
-                  <Button asChild className="rounded-full px-5" size="sm">
-                    <Link href="/signup">회원가입</Link>
-                  </Button>
-                </div>
-              )}
-            </div>
+            {user ? (
+              <UserMenu displayName={displayName} />
+            ) : (
+              <div className="flex items-center gap-2">
+                <Button asChild variant="ghost" size="sm">
+                  <Link href="/login">로그인</Link>
+                </Button>
+                <Button asChild className="rounded-full px-5" size="sm">
+                  <Link href="/signup">회원가입</Link>
+                </Button>
+              </div>
+            )}
           </nav>
+          <MobileMenu
+            isAuthenticated={Boolean(user)}
+            displayName={displayName}
+          />
         </div>
       </div>
     </header>

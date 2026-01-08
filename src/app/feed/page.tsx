@@ -16,7 +16,27 @@ export default async function FeedPage() {
   }
 
   const postIds = (posts ?? []).map((post) => post.id);
+  const commentCountByPostId = new Map<string, number>();
   const likedPostIds = new Set<number>();
+
+  if (postIds.length > 0) {
+    const { data: commentsData, error: commentsError } = await supabase
+      .from("post_comments")
+      .select("post_id")
+      .in("post_id", postIds);
+
+    if (commentsError) {
+      console.error("Supabase post comments fetch error:", commentsError.message);
+    }
+
+    (commentsData ?? []).forEach((comment) => {
+      const postId = String(comment.post_id);
+      commentCountByPostId.set(
+        postId,
+        (commentCountByPostId.get(postId) ?? 0) + 1
+      );
+    });
+  }
 
   if (user && postIds.length > 0) {
     const { data: likesData, error: likesError } = await supabase
@@ -34,7 +54,12 @@ export default async function FeedPage() {
     });
   }
 
+  const viewPosts = (posts ?? []).map((post) => ({
+    ...post,
+    comments: commentCountByPostId.get(String(post.id)) ?? 0,
+  }));
+
   return (
-    <FeedClient posts={posts ?? []} likedPostIds={[...likedPostIds]} />
+    <FeedClient posts={viewPosts} likedPostIds={[...likedPostIds]} />
   );
 }

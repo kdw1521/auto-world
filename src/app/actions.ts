@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { getSupabaseServerClient } from "@/lib/supabase/server";
@@ -268,6 +269,7 @@ export async function createPost(formData: FormData) {
     redirect("/write?error=failed");
   }
 
+  revalidateTag("feed", { expire: 0 });
   redirect("/?posted=1");
 }
 
@@ -326,6 +328,7 @@ export async function updatePost(formData: FormData) {
     redirect(`/posts/${postId}/edit?error=failed`);
   }
 
+  revalidateTag("feed", { expire: 0 });
   redirect(`/posts/${postId}?edited=1`);
 }
 
@@ -507,6 +510,7 @@ export async function createComment(formData: FormData) {
     redirect(`/posts/${postId}?comment_error=failed#comments`);
   }
 
+  revalidateTag("feed", { expire: 0 });
   redirect(`/posts/${postId}?commented=1#comments`);
 }
 

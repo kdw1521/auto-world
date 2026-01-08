@@ -8,6 +8,7 @@ import TopActionsMenu from "@/components/nav/top-actions-menu";
 import ToastEvents from "@/components/notifications/toast-events";
 import { Toaster } from "@/components/ui/sonner";
 import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import SiteFooter from "@/components/sections/site-footer";
 
 const siteUrl =
@@ -110,6 +111,7 @@ export default function RootLayout({
         </Suspense>
         <Toaster />
         <Analytics />
+        <SpeedInsights />
         <SiteFooter />
       </body>
     </html>
